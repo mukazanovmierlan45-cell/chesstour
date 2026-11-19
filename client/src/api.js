@@ -62,6 +62,7 @@ export async function api(path, { method = 'GET', body, formData, query } = {}) 
     throw new ApiError(401, message);
   }
   if (response.status === 422) throw new ApiError(422, message, data?.errors || {});
-  if (response.status >= 500) throw new ApiError(response.status, 'Внутренняя ошибка сервера, попробуйте позже');
+  // 503 — сервис временно недоступен (например, ИИ): показываем объяснение сервера
+  if (response.status >= 500 && response.status !== 503) throw new ApiError(response.status, 'Внутренняя ошибка сервера, попробуйте позже');
   throw new ApiError(response.status, message);
 }

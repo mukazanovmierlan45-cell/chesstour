@@ -38,6 +38,11 @@ try {
         $ini = $ini -replace "^;extension=$ext$", "extension=$ext"
     }
     $ini += 'memory_limit = 512M'
+    # корневые сертификаты: без них PHP не открывает HTTPS (cURL error 60 при запросах к Gemini)
+    $cacert = Join-Path $phpDir 'cacert.pem'
+    Invoke-WebRequest 'https://curl.se/ca/cacert.pem' -OutFile $cacert -UseBasicParsing
+    $ini += "curl.cainfo=`"$cacert`""
+    $ini += "openssl.cafile=`"$cacert`""
     Set-Content (Join-Path $phpDir 'php.ini') $ini -Encoding ASCII
     $ErrorActionPreference = 'Continue'
     & $php -v 2>&1 | ForEach-Object { "$_" } | Out-Host
