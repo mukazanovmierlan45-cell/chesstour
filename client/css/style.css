@@ -487,6 +487,13 @@ main:not(.container):not(:has(.auth)):not(:has(.split)) { padding-bottom: 96px; 
   .tabs a { white-space: nowrap; padding: 8px 13px; }
   .pill { padding: 17px 30px; font-size: 15px; }
 }
+/* ---------- Появление при прокрутке ---------- */
+.reveal { opacity: 0; transform: translateY(34px); }
+.reveal.in { opacity: 1; transform: none; transition: opacity .9s var(--ease) var(--rd, 0s), transform .9s var(--ease) var(--rd, 0s); }
+.reveal-words .w { display: inline-block; overflow: hidden; vertical-align: bottom; padding: 0 .02em .14em; margin-bottom: -.14em; }
+.reveal-words .wi { display: inline-block; transform: translateY(110%); }
+.reveal-words.in .wi { transform: none; transition: transform .95s var(--ease) calc(var(--wi) * 70ms); }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }

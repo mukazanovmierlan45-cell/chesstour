@@ -3,6 +3,7 @@ import { getToken, getUser, setUser, clearSession, hasRole } from './auth.js';
 import { avatar, esc, flash } from './ui.js';
 import { API_BASE_URL } from './config.js';
 import { PIECE_DEFS, pieceSVG } from './pieces.js';
+import { initReveal } from './reveal.js';
 import { homePage } from './pages/home.js';
 import { loginPage, registerPage } from './pages/auth.js';
 import { tournamentsPage } from './pages/tournaments.js';
@@ -131,4 +132,4 @@ document.querySelectorAll('.brand-mark').forEach((mark) => { mark.innerHTML = pi
 
 document.getElementById('year').textContent = new Date().getFullYear();
 window.addEventListener('hashchange', router);
-window.addEventListener('DOMContentLoaded', () => { router(); checkApi(); });
+window.addEventListener('DOMContentLoaded', () => { initReveal(); router(); checkApi(); });
