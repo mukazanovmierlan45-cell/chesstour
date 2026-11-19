@@ -1,5 +1,6 @@
 import { API_BASE_URL } from './config.js';
-import { getToken, clearSession } from './auth.js';
+
+export const TOKEN_KEY = 'chess_token';
 
 export class ApiError extends Error {
   constructor(status, message, errors = null) {
@@ -9,10 +10,14 @@ export class ApiError extends Error {
   }
 }
 
+// Реакция на 401 задаётся контекстом авторизации (сброс пользователя и переход на вход)
+let onUnauthorized = () => {};
+export const setUnauthorizedHandler = (handler) => { onUnauthorized = handler; };
+
 /**
  * Общая функция запросов к API.
  * - добавляет Accept, Content-Type и Authorization: Bearer <token>;
- * - 401: удаляет токен и отправляет на страницу входа;
+ * - 401: удаляет токен и сообщает контексту авторизации;
  * - 422: бросает ApiError с объектом errors для вывода в форме;
  * - ошибки сети и 500 превращаются в понятное сообщение.
  */
@@ -25,7 +30,7 @@ export async function api(path, { method = 'GET', body, formData, query } = {}) 
   }
 
   const headers = { Accept: 'application/json' };
-  const token = getToken();
+  const token = localStorage.getItem(TOKEN_KEY);
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let payload;
@@ -51,14 +56,12 @@ export async function api(path, { method = 'GET', body, formData, query } = {}) 
   if (response.ok) return data;
 
   const message = data?.message || `Ошибка ${response.status}`;
-
   if (response.status === 401) {
-    clearSession();
-    if (!location.hash.startsWith('#/login')) location.hash = '#/login';
+    localStorage.removeItem(TOKEN_KEY);
+    onUnauthorized();
     throw new ApiError(401, message);
   }
   if (response.status === 422) throw new ApiError(422, message, data?.errors || {});
   if (response.status >= 500) throw new ApiError(response.status, 'Внутренняя ошибка сервера, попробуйте позже');
-
   throw new ApiError(response.status, message);
 }

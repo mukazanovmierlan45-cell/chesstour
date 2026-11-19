@@ -5,10 +5,12 @@ const BLOCKS = [
   '.role-rows li', '.split-light > .actions', '.piece-row', '.t-facts', '.podium', '.table-wrap',
   '.card:not(.t-card)', '.tabs', '.section-head > a', '.footer-inner > div',
 ].join(',');
-// Заголовки — печать с курсором; описания — быстрее, сразу после заголовка своего раздела
-const HEADINGS = '.hero .display, .display-2, .page-head h1, .t-hero h1, main h2';
-const LEADS = '.hero-sub, .section-head p, .stage-lead, .page-head p, .t-hero p, .split-light > p, .auth-side p';
-const PARAS = '.step-card h3, .step-card p, .role-rows small';
+// Печатается только текст, помеченный в разметке: data-type="h" — заголовок с курсором,
+// "p" — описание (быстрее, после заголовка своего раздела), "t" — текст карточки.
+// Помечаются только статичные строки: React их больше не перерисовывает.
+const HEADINGS = '[data-type="h"]';
+const LEADS = '[data-type="p"]';
+const PARAS = '[data-type="t"]';
 
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

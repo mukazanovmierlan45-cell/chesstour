@@ -417,7 +417,9 @@ input.invalid, select.invalid, textarea.invalid { border-color: var(--danger); b
 
 /* ---------- Футер ---------- */
 .footer { background: #0c0c0c; color: var(--muted-dark); }
-main:not(.container):not(:has(.auth)):not(:has(.split)) { padding-bottom: 96px; }
+.page-full:not(:has(.auth)):not(:has(.split)) { padding-bottom: 96px; }
+.fp-pair { position: absolute; inset: 0; pointer-events: none; }
+#root { display: contents; }
 .footer-inner { width: min(1160px, 100% - 40px); margin: 0 auto; padding: 56px 0 32px; display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 32px; }
 .footer .brand { color: #fff; }
 .footer .brand-sub { color: var(--muted-dark); }
@@ -471,7 +473,7 @@ main:not(.container):not(:has(.auth)):not(:has(.split)) { padding-bottom: 96px; 
   .chips-layer { position: static; display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 10px; order: 2; }
   .chip-float { position: relative; left: auto !important; top: auto !important; scale: 1; }
   .players-center { position: static; }
-  .chips-stage > .fp { display: none; }
+  .chips-stage > .fp-pair { display: none; }
   .steps { grid-template-columns: 1fr; }
   .step-card:last-child { grid-column: auto; }
   .step-card p { max-width: 70%; }

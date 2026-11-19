@@ -1,8 +1,7 @@
-import { getUser } from '../auth.js';
-import { colorOf, inCheck, isMateScore, legalMoves, makeMove, notation, sqName, startPosition, status } from '../chess.js';
-import { analyseAsync, moveAccuracy, winPercent } from '../engine.js';
-import { pieceSVG } from '../pieces.js';
-import { avatar, esc } from '../ui.js';
+import { colorOf, inCheck, isMateScore, legalMoves, makeMove, notation, sqName, startPosition, status } from './chess.js';
+import { analyseAsync, moveAccuracy, winPercent } from './engine.js';
+import { pieceSVG } from './pieces.js';
+import { avatar, esc } from './format.js';
 
 const LEVELS = {
   novice: { label: 'Новичок', noise: 260 },
@@ -30,17 +29,14 @@ const ROBOT = `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="30" y="2" wi
 const sameMove = (a, b) => a.from === b.from && a.to === b.to;
 const fmtEval = (cp) => (isMateScore(cp) ? `${cp > 0 ? '' : '−'}M` : `${cp > 0 ? '+' : cp < 0 ? '−' : ''}${(Math.abs(cp) / 100).toFixed(1)}`);
 
-export function trainingPage(root) {
-  const user = getUser();
+/** Монтирует тренировку в контейнер root; user — текущий пользователь. */
+export function mountTraining(root, user) {
   const s = {
     side: 'w', level: 'amateur', pos: startPosition(), history: [], selected: -1,
     analysis: null, busy: false, over: false, hint: 0, hints: 0, review: [], whiteEval: 0,
   };
 
   root.innerHTML = `
-    <div class="page-head">
-      <div><h1>Тренировка с роботом</h1><p>Сыграйте партию, а тренер Гамбит разберёт каждый ваш ход — как в разборе партий на шахматных сайтах.</p></div>
-    </div>
     <div class="train">
       <div class="train-board">
         <div class="player-strip" id="strip-top"></div>

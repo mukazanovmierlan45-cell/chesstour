@@ -10,6 +10,7 @@ export function mountChess(root) {
   const movesEl = root.querySelector('#moves');
   const controls = root.querySelector('#play-controls');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const stage = root.classList.contains('stage') ? root : root.querySelector('.stage');
 
   let mode = 'demo';
   let pos = startPosition();
@@ -56,7 +57,7 @@ export function mountChess(root) {
     clearInterval(demoTimer);
     pos = startPosition(); history = []; selected = -1; thinking = false;
     board.setPosition(pos.b); board.mark(); renderMoves(); renderControls();
-    root.querySelector('.stage').classList.remove('playing');
+    stage.classList.remove('playing');
     setStatus('Итальянская партия разыгрывается сама — или нажмите на доску и сыграйте с компьютером.');
     if (reduced) return;
     let i = 0;
@@ -85,7 +86,7 @@ export function mountChess(root) {
     board.fade(false);
     pos = startPosition(); history = []; selected = -1; thinking = false;
     board.setPosition(pos.b); board.mark(); renderMoves(); renderControls();
-    root.querySelector('.stage').classList.add('playing');
+    stage.classList.add('playing');
     setStatus(HINT);
   }
 

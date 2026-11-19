@@ -1,6 +1,5 @@
 // Доска в перспективе: фигуры стоят вертикально и сами разыгрывают партию.
 import { pieceSVG } from './pieces.js';
-
 import { colorOf, sqName } from './chess.js';
 
 // Итальянская партия для демонстрации: 1.e4 e5 2.Кf3 Кc6 3.Сc4 Сc5 4.c3 Кf6 5.d4 ed 6.cd Сb4+ 7.Сd2 С:d2+ 8.Кb:d2 d5

@@ -8,10 +8,15 @@ const pending = new Map();
 try {
   worker = new Worker(new URL('./engine-worker.js', import.meta.url), { type: 'module' });
   worker.onmessage = ({ data }) => {
-    pending.get(data.id)?.(data.result);
+    pending.get(data.id)?.resolve(data.result);
     pending.delete(data.id);
   };
-  worker.onerror = () => { worker = null; };
+  // если поток не запустился — досчитываем ожидающие запросы в основном потоке
+  worker.onerror = () => {
+    worker = null;
+    pending.forEach(({ resolve, pos, depth }) => resolve(analyse(pos, depth)));
+    pending.clear();
+  };
 } catch {
   worker = null;
 }
@@ -21,7 +26,7 @@ export function analyseAsync(pos, depth = 2) {
   if (!worker) return new Promise((resolve) => setTimeout(() => resolve(analyse(pos, depth)), 0));
   return new Promise((resolve) => {
     const id = ++seq;
-    pending.set(id, resolve);
+    pending.set(id, { resolve, pos, depth });
     worker.postMessage({ id, pos, depth });
   });
 }
