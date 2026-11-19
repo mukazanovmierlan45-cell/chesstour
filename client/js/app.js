@@ -1,6 +1,6 @@
 import { api } from './api.js';
 import { getToken, getUser, setUser, clearSession, hasRole } from './auth.js';
-import { esc, flash } from './ui.js';
+import { avatar, esc, flash } from './ui.js';
 import { API_BASE_URL } from './config.js';
 import { homePage } from './pages/home.js';
 import { loginPage, registerPage } from './pages/auth.js';
@@ -35,10 +35,6 @@ async function loadUser() {
   }
 }
 
-function initials(name = '') {
-  return name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-}
-
 function renderNav(hash) {
   const user = getUser();
   const link = (href, label) => {
@@ -52,8 +48,7 @@ function renderNav(hash) {
     links.push(link('#/my', 'Мои турниры'));
     if (hasRole('organizer', 'admin')) links.push(link('#/tournaments/new', 'Новый турнир'));
     if (hasRole('admin')) links.push(link('#/admin', 'Администрирование'));
-    links.push(`<span class="who"><span>${esc(user.name)}<br><small>${esc(user.role_label)}</small></span>
-      <span class="avatar" aria-hidden="true">${esc(initials(user.name))}</span></span>`);
+    links.push(`<span class="who"><span>${esc(user.name)}<small>${esc(user.role_label)}</small></span>${avatar(user.name)}</span>`);
     links.push('<a href="#" id="logout">Выйти</a>');
   } else {
     links.push(link('#/login', 'Вход'), '<a href="#/register" class="btn" style="padding:8px 14px">Регистрация</a>');
@@ -74,6 +69,7 @@ async function router() {
   await loadUser();
   const hash = location.hash || '#/';
   renderNav(hash);
+  setMenu(false);
   window.scrollTo(0, 0);
 
   const route = routes.find(([pattern]) => pattern.test(hash));
@@ -116,6 +112,16 @@ async function checkApi() {
     text.textContent = 'Сервер недоступен';
   }
 }
+
+const toggle = document.getElementById('nav-toggle');
+function setMenu(open) {
+  document.body.classList.toggle('menu-open', open);
+  toggle.setAttribute('aria-expanded', String(open));
+  toggle.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+}
+toggle.addEventListener('click', () => setMenu(!document.body.classList.contains('menu-open')));
+const topbar = document.querySelector('.topbar');
+window.addEventListener('scroll', () => topbar.classList.toggle('scrolled', window.scrollY > 8), { passive: true });
 
 document.getElementById('year').textContent = new Date().getFullYear();
 window.addEventListener('hashchange', router);

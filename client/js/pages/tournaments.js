@@ -22,9 +22,16 @@ export async function tournamentsPage(root) {
     <div class="page-head">
       <div><h1>Турниры клуба</h1><p>Блиц, рапид и классика — выберите турнир и подайте заявку</p></div>
     </div>
+    <nav class="tabs" aria-label="Статус турнира">
+      ${Object.entries(STATUSES).filter(([v]) => v !== 'draft' && v !== 'cancelled').map(([value, label]) =>
+        `<a href="#" data-status="${value}" class="${(params.status || '') === value ? 'active' : ''}">${value ? label : 'Все'}</a>`).join('')}
+    </nav>
     <form id="filters" class="card filters">
-      <div class="row"><label>Поиск</label><input name="search" value="${esc(params.search || '')}" placeholder="Название или место"></div>
-      <div class="row"><label>Статус</label><select name="status">${options(STATUSES, params.status || '')}</select></div>
+      <input type="hidden" name="status" value="${esc(params.status || '')}">
+      <div class="row search-row"><label for="search">Поиск</label><input id="search" name="search" type="search" value="${esc(params.search || '')}" placeholder="Название турнира или место проведения"></div>
+      <details class="more" ${['format', 'time_control_id', 'date_from', 'date_to'].some((k) => params[k]) ? 'open' : ''}>
+      <summary>Ещё фильтры и сортировка</summary>
+      <div class="more-grid">
       <div class="row"><label>Система</label><select name="format">${options(FORMATS, params.format || '')}</select></div>
       <div class="row"><label>Контроль времени</label><select name="time_control_id">
         <option value="">Любой</option>
@@ -34,9 +41,11 @@ export async function tournamentsPage(root) {
       <div class="row"><label>по</label><input type="date" name="date_to" value="${esc(params.date_to || '')}"></div>
       <div class="row"><label>Сортировать по</label><select name="sort">${options(SORTS, params.sort)}</select></div>
       <div class="row"><label>Порядок</label><select name="order">${options({ asc: 'По возрастанию', desc: 'По убыванию' }, params.order)}</select></div>
+      </div>
+      </details>
       <div class="actions"><button type="submit">Применить</button><button type="button" class="secondary" id="reset">Сбросить</button></div>
     </form>
-    <div id="list"><p class="muted">Загрузка…</p></div>`;
+    <div id="list"><div class="grid">${'<div class="t-card skeleton"></div>'.repeat(3)}</div></div>`;
 
   const form = root.querySelector('#filters');
   const apply = (extra = {}) => {
@@ -46,13 +55,18 @@ export async function tournamentsPage(root) {
   };
   form.addEventListener('submit', (event) => { event.preventDefault(); apply(); });
   root.querySelector('#reset').addEventListener('click', () => { location.hash = '#/tournaments'; });
+  root.querySelectorAll('.tabs [data-status]').forEach((tab) => tab.addEventListener('click', (event) => {
+    event.preventDefault();
+    form.elements.status.value = tab.dataset.status;
+    apply();
+  }));
 
   const list = root.querySelector('#list');
   try {
     const response = await api('/tournaments', { query: params });
     renderList(list, response, (page) => apply({ page: String(page) }));
   } catch (error) {
-    list.innerHTML = `<div class="card">${esc(error.message)}</div>`;
+    list.innerHTML = `<div class="card empty">${esc(error.message)}</div>`;
   }
 }
 
@@ -84,7 +98,7 @@ export function tournamentCard(t) {
 
 function renderList(root, { data, meta }, goTo) {
   if (!data.length) {
-    root.innerHTML = '<div class="card empty">Турниров по этим условиям нет. Измените фильтры или сбросьте их.</div>';
+    root.innerHTML = '<div class="card empty"><span class="empty-glyph">♘</span>Турниров по этим условиям нет. Измените фильтры или сбросьте их.</div>';
     return;
   }
 

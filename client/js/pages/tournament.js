@@ -1,6 +1,6 @@
 import { api } from '../api.js';
 import { getUser, hasRole } from '../auth.js';
-import { badge, esc, flash, formatDate, formatDateTime } from '../ui.js';
+import { avatar, badge, esc, flash, formatDate, formatDateTime } from '../ui.js';
 
 const NEXT_STATUS = {
   draft: [['registration', 'Открыть регистрацию'], ['cancelled', 'Отменить']],
@@ -41,10 +41,12 @@ export async function tournamentPage(root, id) {
       <div><span>Контроль времени</span><b>${esc(t.time_control?.name ?? '—')}</b></div>
       <div><span>Заявки до</span><b>${formatDateTime(t.registration_deadline)}</b></div>
       <div><span>Участники</span><b>${t.participants_count} из ${t.max_participants}</b></div>
-      <div><span>Туры</span><b>${t.rounds_created ?? 0} из ${t.rounds_count}</b></div>
+      <div><span>Туры</span><b>${t.rounds_created ?? 0} из ${t.rounds_count}</b>
+        <span class="dots" aria-hidden="true">${Array.from({ length: t.rounds_count }, (_, i) => `<i class="${i < (t.rounds_created ?? 0) ? 'on' : ''}"></i>`).join('')}</span></div>
       <div><span>Допуск</span><b>${t.min_rating ? `рейтинг от ${t.min_rating}` : 'без ограничений'}</b></div>
       <div><span>Организатор</span><b>${esc(t.organizer?.name ?? '—')}</b></div>
     </div>
+    ${t.status === 'finished' && standings.length >= 3 ? podium(standings) : ''}
     <div id="manage"></div>
     <h2>Турнирная таблица</h2>
     <div id="standings"></div>
@@ -152,7 +154,7 @@ function renderStandings(box, rows) {
     <div class="table-wrap"><table>
       <thead><tr><th>Место</th><th>Игрок</th><th>Рейтинг</th><th>Очки</th><th>Бухгольц</th><th>Партий</th></tr></thead>
       <tbody>${rows.map((r) => `
-        <tr class="${r.place <= 3 ? `place-${r.place}` : ''}"><td>${r.place}</td><td>${esc(r.user.name)}</td><td>${r.rating_at_start}</td>
+        <tr class="${r.place <= 3 ? `place-${r.place}` : ''}"><td>${r.place}</td><td><span class="person">${avatar(r.user.name)}${esc(r.user.name)}</span></td><td>${r.rating_at_start}</td>
         <td class="points">${r.points}</td><td>${r.buchholz}</td><td>${r.games_played}</td></tr>`).join('')}
       </tbody>
     </table></div>`;
@@ -176,11 +178,11 @@ function renderRounds(box, t, rounds, canManage, reload) {
         <tbody>${round.games.map((g) => `
           <tr>
             <td>${g.board_number}</td>
-            <td>${esc(g.white?.name ?? '')}</td>
+            <td>${g.white ? `<span class="person">${avatar(g.white.name)}${esc(g.white.name)}</span>` : ''}</td>
             <td>${canManage && round.status === 'ongoing' && !g.is_bye
               ? `<select data-game="${g.id}">${RESULTS.map(([v, l]) => `<option value="${v}" ${v === g.result ? 'selected' : ''}>${l}</option>`).join('')}</select>`
               : `<span class="result">${esc(g.result_notation)}</span>`}</td>
-            <td>${g.is_bye ? '<span class="muted">без пары (+1)</span>' : esc(g.black?.name ?? '')}</td>
+            <td>${g.is_bye ? '<span class="muted">без пары (+1)</span>' : (g.black ? `<span class="person">${avatar(g.black.name)}${esc(g.black.name)}</span>` : '')}</td>
           </tr>`).join('')}
         </tbody>
       </table></div>
@@ -206,7 +208,7 @@ function renderParticipants(box, t, participants, canManage, reload) {
       <tbody>${participants.map((p) => `
         <tr>
           <td>${p.start_number ?? '—'}</td>
-          <td>${esc(p.user.name)}</td>
+          <td><span class="person">${avatar(p.user.name)}${esc(p.user.name)}</span></td>
           <td>${p.rating_at_start}</td>
           <td>${badge(p.status, p.status_label)}</td>
           ${editable ? `<td class="actions">
@@ -220,4 +222,16 @@ function renderParticipants(box, t, participants, canManage, reload) {
   box.querySelectorAll('[data-user]').forEach((button) => button.addEventListener('click', () =>
     act(api(`/tournaments/${t.id}/participants/${button.dataset.user}`, { method: 'PATCH', body: { status: button.dataset.to } }),
       'Статус заявки изменён', reload)));
+}
+
+function podium(rows) {
+  const [first, second, third] = rows;
+  const step = (r, cls) => `
+    <div class="step ${cls}">
+      ${avatar(r.user.name, 'lg')}
+      <b>${esc(r.user.name)}</b>
+      <span>${r.points} очк.</span>
+      <div class="block">${r.place}</div>
+    </div>`;
+  return `<section class="podium" aria-label="Призёры турнира">${step(second, 'p2')}${step(first, 'p1')}${step(third, 'p3')}</section>`;
 }

@@ -55,3 +55,27 @@ export function checkRequired(form, fields) {
 }
 
 export const formData = (form) => Object.fromEntries(new FormData(form).entries());
+
+/** Аватар с инициалами; цвет стабильно зависит от имени. */
+const AVATAR_COLORS = ['#13233f', '#007b96', '#8a5a34', '#1f8a5c', '#6a4fb3', '#b86e00'];
+export function avatar(name = '', size = '') {
+  const letters = String(name).split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  let hash = 0;
+  for (const ch of String(name)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return `<span class="avatar ${size}" style="background:${AVATAR_COLORS[hash % AVATAR_COLORS.length]}" aria-hidden="true">${esc(letters || '?')}</span>`;
+}
+
+const MONTHS_SHORT = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+export const shortDate = (iso) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+};
+
+/** Склонение: plural(5, 'тур', 'тура', 'туров') */
+export function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
