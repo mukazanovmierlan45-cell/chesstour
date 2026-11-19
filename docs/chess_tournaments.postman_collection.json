@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Шахматные турниры API",
-    "description": "REST API системы организации и проведения шахматных турниров (Laravel 12 + Sanctum).\n\nПеред запуском: php artisan migrate:fresh --seed. Учётные записи: admin@chess.test, organizer@chess.test, player@chess.test, пароль password.\n\nВо всех запросах заголовок Accept: application/json. Токен сохраняется в переменную {{token}} скриптом после входа.",
+    "description": "REST API системы организации и проведения шахматных турниров «Гамбит» (Laravel 12 + Sanctum).\n\n**Как пользоваться**\n1. Запустите API (`php artisan serve` или ЗАПУСТИТЬ.bat) — адрес в переменной `{{base_url}}` (по умолчанию http://127.0.0.1:8000/api/v1).\n2. Выполните один из запросов «Вход» — скрипт сохранит токен в переменную `{{token}}`. Авторизация коллекции — Bearer Token `{{token}}`.\n3. Во всех запросах передаётся заголовок `Accept: application/json`.\n\n**Формат ответов.** Успех — объект `data` (списки с пагинацией — `data`, `links`, `meta`). Ошибки — `{ \"message\": \"...\" }`, для 422 — дополнительно `errors` по полям.\n\n**Коды:** 200, 201 (создано), 204 (удалено), 401 (нет токена), 403 (нет прав по роли или не свой турнир), 404 (запись не найдена), 409 (нарушение бизнес-правила), 422 (ошибка валидации).\n\n**Роли:** player — игрок, organizer — организатор, admin — администратор. Тестовые учётные записи: admin@chess.test, organizer@chess.test, player@chess.test, пароль `password`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -59,8 +59,91 @@
             },
             "auth": {
               "type": "noauth"
+            },
+            "description": "Проверка, что API запущен и отвечает. Используется клиентом для индикатора «Сервер работает».\n\n**Доступ:** без авторизации.\n\n**Коды ответов:** 200 OK, 503 Service Unavailable."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "http://127.0.0.1:8000/api/health",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1"
+                  ],
+                  "port": "8000",
+                  "path": [
+                    "api",
+                    "health"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"app\": \"Шахматные турниры\",\n  \"time\": \"2026-11-19T12:00:00+05:00\",\n  \"database\": \"ok\"\n}"
+            },
+            {
+              "name": "503 нет базы данных",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "http://127.0.0.1:8000/api/health",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1"
+                  ],
+                  "port": "8000",
+                  "path": [
+                    "api",
+                    "health"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Service Unavailable",
+              "code": 503,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"app\": \"Шахматные турниры\",\n  \"time\": \"2026-11-19T12:00:00+05:00\",\n  \"database\": \"unavailable\"\n}"
             }
-          }
+          ]
         }
       ]
     },
@@ -90,7 +173,7 @@
                 "register"
               ]
             },
-            "description": "201 + токен. Роль — player.",
+            "description": "Создаёт аккаунт игрока (роль player) и сразу возвращает токен Sanctum. Скрипт во вкладке Scripts сохраняет токен в переменную `{{token}}`.\n\n**Доступ:** без авторизации.\n\n**Параметры:** Тело: `name`, `email` (уникальный), `password` (не менее 8 символов), `password_confirmation`.\n\n**Коды ответов:** 201 Created, 422 Unprocessable Entity.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Новый Игрок\",\n  \"email\": \"new@chess.test\",\n  \"password\": \"secret123\",\n  \"password_confirmation\": \"secret123\"\n}",
@@ -115,6 +198,102 @@
                   "if (json.token) { pm.collectionVariables.set('token', json.token); }"
                 ]
               }
+            }
+          ],
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/register",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Новый Игрок\",\n  \"email\": \"new@chess.test\",\n  \"password\": \"secret123\",\n  \"password_confirmation\": \"secret123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 11,\n    \"name\": \"Новый Игрок\",\n    \"email\": \"new@chess.test\",\n    \"role\": \"player\",\n    \"role_label\": \"Игрок\",\n    \"rating\": 1200,\n    \"created_at\": \"2026-11-19T12:30:00+05:00\"\n  },\n  \"token\": \"12|kq7Hn3VvW2xYb8Zp4LmN0aBcDeFgHiJkLmNoPqRs\"\n}"
+            },
+            {
+              "name": "422 email занят",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/register",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Новый Игрок\",\n  \"email\": \"new@chess.test\",\n  \"password\": \"secret123\",\n  \"password_confirmation\": \"secret123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Ошибка валидации\",\n  \"errors\": {\n    \"email\": [\n      \"Пользователь с таким email уже зарегистрирован\"\n    ]\n  }\n}"
             }
           ]
         },
@@ -141,7 +320,7 @@
                 "register"
               ]
             },
-            "description": "422, errors по полям",
+            "description": "Демонстрация единого формата ошибок валидации: `message` + `errors` по полям.\n\n**Доступ:** без авторизации.\n\n**Коды ответов:** 422 Unprocessable Entity.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"\",\n  \"email\": \"not-an-email\",\n  \"password\": \"1\",\n  \"password_confirmation\": \"2\"\n}",
@@ -154,7 +333,56 @@
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/register",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"\",\n  \"email\": \"not-an-email\",\n  \"password\": \"1\",\n  \"password_confirmation\": \"2\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Ошибка валидации\",\n  \"errors\": {\n    \"name\": [\n      \"Поле имя обязательно для заполнения.\"\n    ],\n    \"email\": [\n      \"Поле email должно быть корректным email-адресом.\"\n    ],\n    \"password\": [\n      \"Поле пароль должно содержать не менее 8 символов.\"\n    ]\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Вход: администратор",
@@ -179,7 +407,7 @@
                 "login"
               ]
             },
-            "description": "",
+            "description": "Вход администратора. Токен сохраняется в `{{token}}` автоматически — следующие запросы выполняются от имени администратора.\n\n**Доступ:** без авторизации.\n\n**Параметры:** Тело: `email`, `password`.\n\n**Коды ответов:** 200 OK.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"admin@chess.test\",\n  \"password\": \"password\"\n}",
@@ -204,6 +432,55 @@
                   "if (json.token) { pm.collectionVariables.set('token', json.token); }"
                 ]
               }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@chess.test\",\n  \"password\": \"password\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Администратор клуба\",\n    \"email\": \"admin@chess.test\",\n    \"role\": \"admin\",\n    \"role_label\": \"Администратор\",\n    \"rating\": 1700,\n    \"created_at\": \"2026-11-19T10:00:00+05:00\"\n  },\n  \"token\": \"12|kq7Hn3VvW2xYb8Zp4LmN0aBcDeFgHiJkLmNoPqRs\"\n}"
             }
           ]
         },
@@ -230,7 +507,7 @@
                 "login"
               ]
             },
-            "description": "",
+            "description": "Вход организатора турниров; токен сохраняется в `{{token}}`.\n\n**Доступ:** без авторизации.\n\n**Параметры:** Тело: `email`, `password`.\n\n**Коды ответов:** 200 OK.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"organizer@chess.test\",\n  \"password\": \"password\"\n}",
@@ -255,6 +532,55 @@
                   "if (json.token) { pm.collectionVariables.set('token', json.token); }"
                 ]
               }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"organizer@chess.test\",\n  \"password\": \"password\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 2,\n    \"name\": \"Ержан Сапаров\",\n    \"email\": \"organizer@chess.test\",\n    \"role\": \"organizer\",\n    \"role_label\": \"Организатор\",\n    \"rating\": 1850,\n    \"created_at\": \"2026-11-19T10:00:00+05:00\"\n  },\n  \"token\": \"12|kq7Hn3VvW2xYb8Zp4LmN0aBcDeFgHiJkLmNoPqRs\"\n}"
             }
           ]
         },
@@ -281,7 +607,7 @@
                 "login"
               ]
             },
-            "description": "",
+            "description": "Вход игрока; токен сохраняется в `{{token}}`.\n\n**Доступ:** без авторизации.\n\n**Параметры:** Тело: `email`, `password`.\n\n**Коды ответов:** 200 OK.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"player@chess.test\",\n  \"password\": \"password\"\n}",
@@ -306,6 +632,55 @@
                   "if (json.token) { pm.collectionVariables.set('token', json.token); }"
                 ]
               }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"player@chess.test\",\n  \"password\": \"password\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 4,\n    \"name\": \"Данияр Сейткали\",\n    \"email\": \"player@chess.test\",\n    \"role\": \"player\",\n    \"role_label\": \"Игрок\",\n    \"rating\": 1620,\n    \"created_at\": \"2026-11-19T10:00:00+05:00\"\n  },\n  \"token\": \"12|kq7Hn3VvW2xYb8Zp4LmN0aBcDeFgHiJkLmNoPqRs\"\n}"
             }
           ]
         },
@@ -332,7 +707,7 @@
                 "login"
               ]
             },
-            "description": "401 «Неверный email или пароль»",
+            "description": "Неверная пара email/пароль — 401 с понятным сообщением.\n\n**Доступ:** без авторизации.\n\n**Коды ответов:** 401 Unauthorized.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"player@chess.test\",\n  \"password\": \"wrong\"\n}",
@@ -345,7 +720,56 @@
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"player@chess.test\",\n  \"password\": \"wrong\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Неверный email или пароль\"\n}"
+            }
+          ]
         },
         {
           "name": "Текущий пользователь",
@@ -366,8 +790,72 @@
                 "user"
               ]
             },
-            "description": ""
-          }
+            "description": "Профиль владельца токена. Клиент вызывает его при открытии сайта, чтобы восстановить сессию.\n\n**Доступ:** любой авторизованный пользователь.\n\n**Коды ответов:** 200 OK, 401 Unauthorized."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/user",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "user"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 4,\n    \"name\": \"Данияр Сейткали\",\n    \"email\": \"player@chess.test\",\n    \"role\": \"player\",\n    \"role_label\": \"Игрок\",\n    \"rating\": 1620,\n    \"created_at\": \"2026-11-19T10:00:00+05:00\"\n  }\n}"
+            },
+            {
+              "name": "401 без токена",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/user",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "user"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Требуется авторизация\"\n}"
+            }
+          ]
         },
         {
           "name": "Без токена (401)",
@@ -388,11 +876,47 @@
                 "user"
               ]
             },
-            "description": "Ожидается 401 «Требуется авторизация»",
+            "description": "Запрос к защищённому маршруту без заголовка Authorization — демонстрация ответа 401.\n\n**Доступ:** любой авторизованный пользователь.\n\n**Коды ответов:** 401 Unauthorized.",
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/user",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "user"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Требуется авторизация\"\n}"
+            }
+          ]
         },
         {
           "name": "Выход",
@@ -413,8 +937,67 @@
                 "logout"
               ]
             },
-            "description": "204, токен удаляется"
-          }
+            "description": "Отзывает текущий токен (удаляет его из personal_access_tokens).\n\n**Доступ:** любой авторизованный пользователь.\n\n**Коды ответов:** 204 No Content, 401 Unauthorized."
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/logout",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "logout"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": ""
+            },
+            {
+              "name": "401 без токена",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/logout",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "logout"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Требуется авторизация\"\n}"
+            }
+          ]
         }
       ]
     },
@@ -466,11 +1049,73 @@
                 }
               ]
             },
-            "description": "",
+            "description": "Каталог турниров с пагинацией, поиском, фильтрами и сортировкой.\n\n**Доступ:** без авторизации.\n\n**Параметры:** Query: `status` (draft, registration, ongoing, finished, cancelled), `search` (название или место), `format`, `time_control_id`, `date_from`, `date_to`, `sort` (start_date, title, created_at, max_participants), `order` (asc, desc), `page`, `per_page` (1–50).\n\n**Коды ответов:** 200 OK.",
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments?status=registration&search=&sort=start_date&order=asc&page=1&per_page=5",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "registration"
+                    },
+                    {
+                      "key": "search",
+                      "value": ""
+                    },
+                    {
+                      "key": "sort",
+                      "value": "start_date"
+                    },
+                    {
+                      "key": "order",
+                      "value": "asc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "5"
+                    }
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 3,\n      \"title\": \"Классический чемпионат города\",\n      \"description\": \"Открытый турнир клуба для игроков с рейтингом от 1500.\",\n      \"format\": \"swiss\",\n      \"format_label\": \"Швейцарская\",\n      \"status\": \"registration\",\n      \"status_label\": \"Регистрация\",\n      \"location\": \"Астана, шахматный клуб «Гамбит»\",\n      \"start_date\": \"2026-12-05\",\n      \"end_date\": \"2026-12-07\",\n      \"registration_deadline\": \"2026-12-04T18:00:00+05:00\",\n      \"is_registration_open\": true,\n      \"max_participants\": 24,\n      \"rounds_count\": 7,\n      \"min_rating\": 1500,\n      \"poster_url\": null,\n      \"organizer_id\": 2,\n      \"organizer\": {\n        \"id\": 2,\n        \"name\": \"Ержан Сапаров\",\n        \"rating\": 1850\n      },\n      \"time_control\": {\n        \"id\": 2,\n        \"name\": \"Блиц 3+2\",\n        \"type\": \"blitz\",\n        \"type_label\": \"Блиц\",\n        \"base_minutes\": 3,\n        \"increment_seconds\": 2,\n        \"short\": \"3+2\"\n      },\n      \"participants_count\": 12,\n      \"rounds_created\": 0,\n      \"created_at\": \"2026-11-19T10:00:00+05:00\",\n      \"updated_at\": \"2026-11-19T10:00:00+05:00\"\n    },\n    {\n      \"id\": 5,\n      \"title\": \"Новогодний блиц\",\n      \"description\": \"Открытый турнир клуба для игроков с рейтингом от 1500.\",\n      \"format\": \"swiss\",\n      \"format_label\": \"Швейцарская\",\n      \"status\": \"registration\",\n      \"status_label\": \"Регистрация\",\n      \"location\": \"Астана, шахматный клуб «Гамбит»\",\n      \"start_date\": \"2026-12-28\",\n      \"end_date\": \"2026-12-28\",\n      \"registration_deadline\": \"2026-12-04T18:00:00+05:00\",\n      \"is_registration_open\": true,\n      \"max_participants\": 32,\n      \"rounds_count\": 7,\n      \"min_rating\": null,\n      \"poster_url\": null,\n      \"organizer_id\": 2,\n      \"organizer\": {\n        \"id\": 2,\n        \"name\": \"Ержан Сапаров\",\n        \"rating\": 1850\n      },\n      \"time_control\": {\n        \"id\": 2,\n        \"name\": \"Блиц 3+2\",\n        \"type\": \"blitz\",\n        \"type_label\": \"Блиц\",\n        \"base_minutes\": 3,\n        \"increment_seconds\": 2,\n        \"short\": \"3+2\"\n      },\n      \"participants_count\": 30,\n      \"rounds_created\": 0,\n      \"created_at\": \"2026-11-19T10:00:00+05:00\",\n      \"updated_at\": \"2026-11-19T10:00:00+05:00\"\n    }\n  ],\n  \"links\": {\n    \"first\": \"{{base_url}}/tournaments?page=1\",\n    \"last\": \"{{base_url}}/tournaments?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"per_page\": 5,\n    \"to\": 2,\n    \"total\": 3\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Фильтр по формату и датам",
@@ -505,11 +1150,61 @@
                 }
               ]
             },
-            "description": "",
+            "description": "Пример фильтрации по системе проведения и диапазону дат начала.\n\n**Доступ:** без авторизации.\n\n**Параметры:** Query: `format`, `date_from`, `date_to`.\n\n**Коды ответов:** 200 OK.",
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments?format=swiss&date_from=2026-01-01&date_to=2027-12-31",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments"
+                  ],
+                  "query": [
+                    {
+                      "key": "format",
+                      "value": "swiss"
+                    },
+                    {
+                      "key": "date_from",
+                      "value": "2026-01-01"
+                    },
+                    {
+                      "key": "date_to",
+                      "value": "2027-12-31"
+                    }
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 3,\n      \"title\": \"Классический чемпионат города\",\n      \"description\": \"Открытый турнир клуба для игроков с рейтингом от 1500.\",\n      \"format\": \"swiss\",\n      \"format_label\": \"Швейцарская\",\n      \"status\": \"registration\",\n      \"status_label\": \"Регистрация\",\n      \"location\": \"Астана, шахматный клуб «Гамбит»\",\n      \"start_date\": \"2026-12-05\",\n      \"end_date\": \"2026-12-07\",\n      \"registration_deadline\": \"2026-12-04T18:00:00+05:00\",\n      \"is_registration_open\": true,\n      \"max_participants\": 24,\n      \"rounds_count\": 7,\n      \"min_rating\": 1500,\n      \"poster_url\": null,\n      \"organizer_id\": 2,\n      \"organizer\": {\n        \"id\": 2,\n        \"name\": \"Ержан Сапаров\",\n        \"rating\": 1850\n      },\n      \"time_control\": {\n        \"id\": 2,\n        \"name\": \"Блиц 3+2\",\n        \"type\": \"blitz\",\n        \"type_label\": \"Блиц\",\n        \"base_minutes\": 3,\n        \"increment_seconds\": 2,\n        \"short\": \"3+2\"\n      },\n      \"participants_count\": 12,\n      \"rounds_created\": 0,\n      \"created_at\": \"2026-11-19T10:00:00+05:00\",\n      \"updated_at\": \"2026-11-19T10:00:00+05:00\"\n    }\n  ],\n  \"links\": {\n    \"first\": \"{{base_url}}/tournaments?page=1\",\n    \"last\": \"{{base_url}}/tournaments?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"per_page\": 5,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Недопустимая сортировка (422)",
@@ -536,11 +1231,53 @@
                 }
               ]
             },
-            "description": "",
+            "description": "Сортировка разрешена только по белому списку полей — иначе 422.\n\n**Доступ:** без авторизации.\n\n**Коды ответов:** 422 Unprocessable Entity.",
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments?sort=password",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments"
+                  ],
+                  "query": [
+                    {
+                      "key": "sort",
+                      "value": "password"
+                    }
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Ошибка валидации\",\n  \"errors\": {\n    \"sort\": [\n      \"Выбрано недопустимое значение поля sort.\"\n    ]\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Карточка турнира",
@@ -562,11 +1299,83 @@
                 "{{tournament_id}}"
               ]
             },
-            "description": "",
+            "description": "Полная информация о турнире: организатор, контроль времени, число участников и созданных туров.\n\n**Доступ:** без авторизации.\n\n**Параметры:** Путь: `{{tournament_id}}`.\n\n**Коды ответов:** 200 OK, 404 Not Found.",
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 3,\n    \"title\": \"Классический чемпионат города\",\n    \"description\": \"Открытый турнир клуба для игроков с рейтингом от 1500.\",\n    \"format\": \"swiss\",\n    \"format_label\": \"Швейцарская\",\n    \"status\": \"registration\",\n    \"status_label\": \"Регистрация\",\n    \"location\": \"Астана, шахматный клуб «Гамбит»\",\n    \"start_date\": \"2026-12-05\",\n    \"end_date\": \"2026-12-07\",\n    \"registration_deadline\": \"2026-12-04T18:00:00+05:00\",\n    \"is_registration_open\": true,\n    \"max_participants\": 24,\n    \"rounds_count\": 7,\n    \"min_rating\": 1500,\n    \"poster_url\": null,\n    \"organizer_id\": 2,\n    \"organizer\": {\n      \"id\": 2,\n      \"name\": \"Ержан Сапаров\",\n      \"rating\": 1850\n    },\n    \"time_control\": {\n      \"id\": 2,\n      \"name\": \"Блиц 3+2\",\n      \"type\": \"blitz\",\n      \"type_label\": \"Блиц\",\n      \"base_minutes\": 3,\n      \"increment_seconds\": 2,\n      \"short\": \"3+2\"\n    },\n    \"participants_count\": 12,\n    \"rounds_created\": 0,\n    \"created_at\": \"2026-11-19T10:00:00+05:00\",\n    \"updated_at\": \"2026-11-19T10:00:00+05:00\"\n  }\n}"
+            },
+            {
+              "name": "404 не найден",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Турнир не найден\"\n}"
+            }
+          ]
         },
         {
           "name": "Несуществующий турнир (404)",
@@ -588,11 +1397,48 @@
                 "99999"
               ]
             },
-            "description": "",
+            "description": "Запись не найдена — понятное сообщение по типу модели.\n\n**Доступ:** без авторизации.\n\n**Коды ответов:** 404 Not Found.",
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/99999",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "99999"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Турнир не найден\"\n}"
+            }
+          ]
         },
         {
           "name": "Создать (организатор)",
@@ -617,7 +1463,7 @@
                 "tournaments"
               ]
             },
-            "description": "201. Под игроком — 403",
+            "description": "Создание турнира в статусе «Черновик». Организатором становится текущий пользователь. Скрипт сохраняет id в `{{tournament_id}}`.\n\n**Доступ:** организатор турнира или администратор.\n\n**Параметры:** Тело: `title`, `description`, `time_control_id`, `format` (swiss | round_robin), `location`, `start_date`, `end_date`, `registration_deadline` (до начала турнира), `max_participants` (2–500), `rounds_count`, `min_rating` (необязательно).\n\n**Коды ответов:** 201 Created, 403 Forbidden.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"time_control_id\": 2,\n  \"title\": \"Кубок весны\",\n  \"description\": \"Открытый турнир по рапиду\",\n  \"format\": \"swiss\",\n  \"location\": \"Шахматный клуб\",\n  \"start_date\": \"2027-03-14\",\n  \"end_date\": \"2027-03-15\",\n  \"registration_deadline\": \"2027-03-12 23:59:00\",\n  \"max_participants\": 16,\n  \"rounds_count\": 5,\n  \"min_rating\": null\n}",
@@ -638,6 +1484,96 @@
                   "pm.collectionVariables.set('tournament_id', pm.response.json().data.id);"
                 ]
               }
+            }
+          ],
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"time_control_id\": 2,\n  \"title\": \"Кубок весны\",\n  \"description\": \"Открытый турнир по рапиду\",\n  \"format\": \"swiss\",\n  \"location\": \"Шахматный клуб\",\n  \"start_date\": \"2027-03-14\",\n  \"end_date\": \"2027-03-15\",\n  \"registration_deadline\": \"2027-03-12 23:59:00\",\n  \"max_participants\": 16,\n  \"rounds_count\": 5,\n  \"min_rating\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 9,\n    \"title\": \"Кубок весны\",\n    \"description\": \"Открытый турнир клуба для игроков с рейтингом от 1500.\",\n    \"format\": \"swiss\",\n    \"format_label\": \"Швейцарская\",\n    \"status\": \"draft\",\n    \"status_label\": \"Черновик\",\n    \"location\": \"Астана, шахматный клуб «Гамбит»\",\n    \"start_date\": \"2027-03-10\",\n    \"end_date\": \"2027-03-12\",\n    \"registration_deadline\": \"2027-03-09T18:00:00+05:00\",\n    \"is_registration_open\": false,\n    \"max_participants\": 24,\n    \"rounds_count\": 7,\n    \"min_rating\": 1500,\n    \"poster_url\": null,\n    \"organizer_id\": 2,\n    \"organizer\": {\n      \"id\": 2,\n      \"name\": \"Ержан Сапаров\",\n      \"rating\": 1850\n    },\n    \"time_control\": {\n      \"id\": 2,\n      \"name\": \"Блиц 3+2\",\n      \"type\": \"blitz\",\n      \"type_label\": \"Блиц\",\n      \"base_minutes\": 3,\n      \"increment_seconds\": 2,\n      \"short\": \"3+2\"\n    },\n    \"participants_count\": 0,\n    \"rounds_created\": 0,\n    \"created_at\": \"2026-11-19T10:00:00+05:00\",\n    \"updated_at\": \"2026-11-19T10:00:00+05:00\"\n  }\n}"
+            },
+            {
+              "name": "403 игрок",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"time_control_id\": 2,\n  \"title\": \"Кубок весны\",\n  \"description\": \"Открытый турнир по рапиду\",\n  \"format\": \"swiss\",\n  \"location\": \"Шахматный клуб\",\n  \"start_date\": \"2027-03-14\",\n  \"end_date\": \"2027-03-15\",\n  \"registration_deadline\": \"2027-03-12 23:59:00\",\n  \"max_participants\": 16,\n  \"rounds_count\": 5,\n  \"min_rating\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Недостаточно прав для выполнения действия\"\n}"
             }
           ]
         },
@@ -664,7 +1600,7 @@
                 "tournaments"
               ]
             },
-            "description": "",
+            "description": "Проверка согласованности дат: окончание раньше начала, приём заявок после старта.\n\n**Доступ:** организатор турнира или администратор.\n\n**Коды ответов:** 422 Unprocessable Entity.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"time_control_id\": 2,\n  \"title\": \"Кубок весны\",\n  \"description\": \"Открытый турнир по рапиду\",\n  \"format\": \"swiss\",\n  \"location\": \"Шахматный клуб\",\n  \"start_date\": \"2027-03-14\",\n  \"end_date\": \"2027-03-01\",\n  \"registration_deadline\": \"2027-03-12 23:59:00\",\n  \"max_participants\": 16,\n  \"rounds_count\": 5,\n  \"min_rating\": null\n}",
@@ -674,7 +1610,53 @@
                 }
               }
             }
-          }
+          },
+          "response": [
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"time_control_id\": 2,\n  \"title\": \"Кубок весны\",\n  \"description\": \"Открытый турнир по рапиду\",\n  \"format\": \"swiss\",\n  \"location\": \"Шахматный клуб\",\n  \"start_date\": \"2027-03-14\",\n  \"end_date\": \"2027-03-01\",\n  \"registration_deadline\": \"2027-03-12 23:59:00\",\n  \"max_participants\": 16,\n  \"rounds_count\": 5,\n  \"min_rating\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Ошибка валидации\",\n  \"errors\": {\n    \"end_date\": [\n      \"Дата окончания должна быть не раньше даты начала\"\n    ],\n    \"registration_deadline\": [\n      \"Приём заявок должен закончиться не позже даты начала\"\n    ]\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Изменить",
@@ -700,7 +1682,7 @@
                 "{{tournament_id}}"
               ]
             },
-            "description": "",
+            "description": "Частичное изменение турнира (PATCH). Завершённый или отменённый турнир изменять нельзя.\n\n**Доступ:** организатор турнира или администратор.\n\n**Параметры:** Тело: любые поля турнира.\n\n**Коды ответов:** 200 OK, 403 Forbidden, 409 Conflict.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"title\": \"Кубок весны 2027\",\n  \"max_participants\": 20\n}",
@@ -710,7 +1692,144 @@
                 }
               }
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Кубок весны 2027\",\n  \"max_participants\": 20\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 9,\n    \"title\": \"Кубок весны 2027\",\n    \"description\": \"Открытый турнир клуба для игроков с рейтингом от 1500.\",\n    \"format\": \"swiss\",\n    \"format_label\": \"Швейцарская\",\n    \"status\": \"draft\",\n    \"status_label\": \"Черновик\",\n    \"location\": \"Астана, шахматный клуб «Гамбит»\",\n    \"start_date\": \"2026-12-05\",\n    \"end_date\": \"2026-12-07\",\n    \"registration_deadline\": \"2026-12-04T18:00:00+05:00\",\n    \"is_registration_open\": false,\n    \"max_participants\": 20,\n    \"rounds_count\": 7,\n    \"min_rating\": 1500,\n    \"poster_url\": null,\n    \"organizer_id\": 2,\n    \"organizer\": {\n      \"id\": 2,\n      \"name\": \"Ержан Сапаров\",\n      \"rating\": 1850\n    },\n    \"time_control\": {\n      \"id\": 2,\n      \"name\": \"Блиц 3+2\",\n      \"type\": \"blitz\",\n      \"type_label\": \"Блиц\",\n      \"base_minutes\": 3,\n      \"increment_seconds\": 2,\n      \"short\": \"3+2\"\n    },\n    \"participants_count\": 12,\n    \"rounds_created\": 0,\n    \"created_at\": \"2026-11-19T10:00:00+05:00\",\n    \"updated_at\": \"2026-11-19T10:00:00+05:00\"\n  }\n}"
+            },
+            {
+              "name": "403 чужой турнир",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Кубок весны 2027\",\n  \"max_participants\": 20\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Недостаточно прав для выполнения действия\"\n}"
+            },
+            {
+              "name": "409 турнир завершён",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Кубок весны 2027\",\n  \"max_participants\": 20\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Завершённый или отменённый турнир изменять нельзя\"\n}"
+            }
+          ]
         },
         {
           "name": "Сменить статус",
@@ -737,7 +1856,7 @@
                 "status"
               ]
             },
-            "description": "draft → registration → ongoing → finished; недопустимый переход — 409",
+            "description": "Переход статуса по жизненному циклу: draft → registration → ongoing → finished (или cancelled). Недопустимый переход — 409.\n\n**Доступ:** организатор турнира или администратор.\n\n**Параметры:** Тело: `status`.\n\n**Коды ответов:** 200 OK, 409 Conflict.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"registration\"\n}",
@@ -747,7 +1866,101 @@
                 }
               }
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "status"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"registration\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 9,\n    \"title\": \"Кубок весны 2027\",\n    \"description\": \"Открытый турнир клуба для игроков с рейтингом от 1500.\",\n    \"format\": \"swiss\",\n    \"format_label\": \"Швейцарская\",\n    \"status\": \"registration\",\n    \"status_label\": \"Регистрация\",\n    \"location\": \"Астана, шахматный клуб «Гамбит»\",\n    \"start_date\": \"2026-12-05\",\n    \"end_date\": \"2026-12-07\",\n    \"registration_deadline\": \"2026-12-04T18:00:00+05:00\",\n    \"is_registration_open\": true,\n    \"max_participants\": 24,\n    \"rounds_count\": 7,\n    \"min_rating\": 1500,\n    \"poster_url\": null,\n    \"organizer_id\": 2,\n    \"organizer\": {\n      \"id\": 2,\n      \"name\": \"Ержан Сапаров\",\n      \"rating\": 1850\n    },\n    \"time_control\": {\n      \"id\": 2,\n      \"name\": \"Блиц 3+2\",\n      \"type\": \"blitz\",\n      \"type_label\": \"Блиц\",\n      \"base_minutes\": 3,\n      \"increment_seconds\": 2,\n      \"short\": \"3+2\"\n    },\n    \"participants_count\": 12,\n    \"rounds_created\": 0,\n    \"created_at\": \"2026-11-19T10:00:00+05:00\",\n    \"updated_at\": \"2026-11-19T10:00:00+05:00\"\n  }\n}"
+            },
+            {
+              "name": "409 мало участников",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "status"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"registration\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Для старта нужно минимум 2 допущенных участника\"\n}"
+            }
+          ]
         },
         {
           "name": "Загрузить афишу",
@@ -770,7 +1983,7 @@
                 "poster"
               ]
             },
-            "description": "multipart/form-data, image до 2 МБ",
+            "description": "Загрузка изображения афиши (multipart/form-data, поле `poster`). Файл сохраняется в Storage (диск public), в ответе — `poster_url`.\n\n**Доступ:** организатор турнира или администратор.\n\n**Параметры:** Тело form-data: `poster` — jpg, jpeg, png или webp, до 2 МБ.\n\n**Коды ответов:** 200 OK, 422 Unprocessable Entity.",
             "body": {
               "mode": "formdata",
               "formdata": [
@@ -781,7 +1994,95 @@
                 }
               ]
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/poster",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "poster"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "poster",
+                      "type": "file",
+                      "src": ""
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 9,\n    \"title\": \"Кубок весны 2027\",\n    \"description\": \"Открытый турнир клуба для игроков с рейтингом от 1500.\",\n    \"format\": \"swiss\",\n    \"format_label\": \"Швейцарская\",\n    \"status\": \"registration\",\n    \"status_label\": \"Регистрация\",\n    \"location\": \"Астана, шахматный клуб «Гамбит»\",\n    \"start_date\": \"2026-12-05\",\n    \"end_date\": \"2026-12-07\",\n    \"registration_deadline\": \"2026-12-04T18:00:00+05:00\",\n    \"is_registration_open\": true,\n    \"max_participants\": 24,\n    \"rounds_count\": 7,\n    \"min_rating\": 1500,\n    \"poster_url\": \"http://127.0.0.1:8000/storage/posters/kubok-vesny.jpg\",\n    \"organizer_id\": 2,\n    \"organizer\": {\n      \"id\": 2,\n      \"name\": \"Ержан Сапаров\",\n      \"rating\": 1850\n    },\n    \"time_control\": {\n      \"id\": 2,\n      \"name\": \"Блиц 3+2\",\n      \"type\": \"blitz\",\n      \"type_label\": \"Блиц\",\n      \"base_minutes\": 3,\n      \"increment_seconds\": 2,\n      \"short\": \"3+2\"\n    },\n    \"participants_count\": 12,\n    \"rounds_created\": 0,\n    \"created_at\": \"2026-11-19T10:00:00+05:00\",\n    \"updated_at\": \"2026-11-19T10:00:00+05:00\"\n  }\n}"
+            },
+            {
+              "name": "422 не изображение",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/poster",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "poster"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "poster",
+                      "type": "file",
+                      "src": ""
+                    }
+                  ]
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Ошибка валидации\",\n  \"errors\": {\n    \"poster\": [\n      \"Файл афиша должен быть изображением.\"\n    ]\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Удалить",
@@ -803,8 +2104,69 @@
                 "{{tournament_id}}"
               ]
             },
-            "description": "204; если есть партии — 409"
-          }
+            "description": "Удаление турнира. Если в турнире уже есть партии — 409 (такой турнир нужно отменить).\n\n**Доступ:** организатор турнира или администратор.\n\n**Коды ответов:** 204 No Content, 409 Conflict."
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": ""
+            },
+            {
+              "name": "409 есть партии",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Нельзя удалить турнир, в котором уже есть партии. Отмените его\"\n}"
+            }
+          ]
         },
         {
           "name": "Турнирная таблица",
@@ -827,11 +2189,120 @@
                 "standings"
               ]
             },
-            "description": "",
+            "description": "Таблица с местами, очками и коэффициентом Бухгольца; считается по результатам партий.\n\n**Доступ:** без авторизации.\n\n**Коды ответов:** 200 OK.",
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/1/standings",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "1",
+                    "standings"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"place\": 1,\n      \"user\": {\n        \"id\": 5,\n        \"name\": \"Алия Касымова\",\n        \"rating\": 1820\n      },\n      \"rating_at_start\": 1820,\n      \"points\": 3.0,\n      \"buchholz\": 5.5,\n      \"games_played\": 3\n    },\n    {\n      \"place\": 2,\n      \"user\": {\n        \"id\": 6,\n        \"name\": \"Тимур Ахметов\",\n        \"rating\": 1760\n      },\n      \"rating_at_start\": 1760,\n      \"points\": 2.5,\n      \"buchholz\": 6.0,\n      \"games_played\": 3\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Создать турнир игроком (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"time_control_id\": 2,\n  \"title\": \"Мой турнир\",\n  \"format\": \"swiss\",\n  \"location\": \"Астана\",\n  \"start_date\": \"2027-03-10\",\n  \"end_date\": \"2027-03-12\",\n  \"registration_deadline\": \"2027-03-09 18:00:00\",\n  \"max_participants\": 16,\n  \"rounds_count\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tournaments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments"
+              ]
+            },
+            "description": "Демонстрация разграничения прав: игрок (токен после «Вход: игрок») пытается создать турнир — middleware role:organizer,admin возвращает 403.\n\n**Доступ:** организатор турнира или администратор.\n\n**Параметры:** Выполните сначала «Вход: игрок».\n\n**Коды ответов:** 403 Forbidden."
+          },
+          "response": [
+            {
+              "name": "403 Forbidden",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"time_control_id\": 2,\n  \"title\": \"Мой турнир\",\n  \"format\": \"swiss\",\n  \"location\": \"Астана\",\n  \"start_date\": \"2027-03-10\",\n  \"end_date\": \"2027-03-12\",\n  \"registration_deadline\": \"2027-03-09 18:00:00\",\n  \"max_participants\": 16,\n  \"rounds_count\": 5\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tournaments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Недостаточно прав для выполнения действия\"\n}"
+            }
+          ]
         }
       ]
     },
@@ -859,11 +2330,49 @@
                 "participants"
               ]
             },
-            "description": "",
+            "description": "Список заявок со статусами и стартовыми номерами.\n\n**Доступ:** без авторизации.\n\n**Коды ответов:** 200 OK.",
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/participants",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "participants"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"user\": {\n        \"id\": 4,\n        \"name\": \"Данияр Сейткали\",\n        \"rating\": 1620\n      },\n      \"start_number\": 1,\n      \"rating_at_start\": 1620,\n      \"status\": \"confirmed\",\n      \"status_label\": \"Допущен\",\n      \"registered_at\": \"2026-11-19T12:40:00+05:00\"\n    }\n  ]\n}"
+            }
+          ]
         },
         {
           "name": "Подать заявку (игрок)",
@@ -886,8 +2395,175 @@
                 "registration"
               ]
             },
-            "description": "201; закрыта регистрация / нет мест / низкий рейтинг — 409"
-          }
+            "description": "Ключевой сценарий. В транзакции с блокировкой строки турнира проверяются: открыта ли регистрация, срок, рейтинг, повторная заявка, свободные места.\n\n**Доступ:** игрок (player).\n\n**Коды ответов:** 201 Created, 403 Forbidden, 409 Conflict."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/registration",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "registration"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"user\": {\n      \"id\": 4,\n      \"name\": \"Данияр Сейткали\",\n      \"rating\": 1620\n    },\n    \"start_number\": null,\n    \"rating_at_start\": 1620,\n    \"status\": \"pending\",\n    \"status_label\": \"Заявка подана\",\n    \"registered_at\": \"2026-11-19T12:40:00+05:00\"\n  }\n}"
+            },
+            {
+              "name": "409 повторная заявка",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/registration",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "registration"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Вы уже подали заявку на этот турнир\"\n}"
+            },
+            {
+              "name": "409 нет мест",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/registration",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "registration"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Свободных мест на турнире нет\"\n}"
+            },
+            {
+              "name": "409 рейтинг",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/registration",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "registration"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Для участия нужен рейтинг не ниже 1500\"\n}"
+            },
+            {
+              "name": "403 не игрок",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/registration",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "registration"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Недостаточно прав для выполнения действия\"\n}"
+            }
+          ]
         },
         {
           "name": "Отозвать заявку (игрок)",
@@ -910,8 +2586,109 @@
                 "registration"
               ]
             },
-            "description": ""
-          }
+            "description": "Отзыв своей заявки до начала турнира.\n\n**Доступ:** игрок (player).\n\n**Коды ответов:** 200 OK, 404 Not Found, 409 Conflict."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/registration",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "registration"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"user\": {\n      \"id\": 4,\n      \"name\": \"Данияр Сейткали\",\n      \"rating\": 1620\n    },\n    \"start_number\": null,\n    \"rating_at_start\": 1620,\n    \"status\": \"withdrawn\",\n    \"status_label\": \"Отозвана\",\n    \"registered_at\": \"2026-11-19T12:40:00+05:00\"\n  }\n}"
+            },
+            {
+              "name": "409 турнир начался",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/registration",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "registration"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Отозвать заявку можно только до начала турнира\"\n}"
+            },
+            {
+              "name": "404 нет заявки",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/registration",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "registration"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Вы не зарегистрированы на этот турнир\"\n}"
+            }
+          ]
         },
         {
           "name": "Допустить игрока (организатор)",
@@ -939,7 +2716,7 @@
                 "5"
               ]
             },
-            "description": "",
+            "description": "Организатор подтверждает или отклоняет заявку и задаёт стартовый номер.\n\n**Доступ:** организатор турнира или администратор.\n\n**Параметры:** Тело: `status` (confirmed | withdrawn | pending), `start_number`.\n\n**Коды ответов:** 200 OK, 409 Conflict.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"confirmed\",\n  \"start_number\": 2\n}",
@@ -949,7 +2726,103 @@
                 }
               }
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/participants/5",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "participants",
+                    "5"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"confirmed\",\n  \"start_number\": 2\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"user\": {\n      \"id\": 4,\n      \"name\": \"Данияр Сейткали\",\n      \"rating\": 1620\n    },\n    \"start_number\": 2,\n    \"rating_at_start\": 1620,\n    \"status\": \"confirmed\",\n    \"status_label\": \"Допущен\",\n    \"registered_at\": \"2026-11-19T12:40:00+05:00\"\n  }\n}"
+            },
+            {
+              "name": "409 лимит",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/{{tournament_id}}/participants/5",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "{{tournament_id}}",
+                    "participants",
+                    "5"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"confirmed\",\n  \"start_number\": 2\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Достигнут лимит допущенных участников\"\n}"
+            }
+          ]
         },
         {
           "name": "Мои турниры",
@@ -971,8 +2844,42 @@
                 "tournaments"
               ]
             },
-            "description": ""
-          }
+            "description": "Турниры, на которые текущий пользователь подавал заявки, со статусом его заявки (`my_registration`).\n\n**Доступ:** любой авторизованный пользователь.\n\n**Коды ответов:** 200 OK."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/my/tournaments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "my",
+                    "tournaments"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 3,\n      \"title\": \"Классический чемпионат города\",\n      \"description\": \"Открытый турнир клуба для игроков с рейтингом от 1500.\",\n      \"format\": \"swiss\",\n      \"format_label\": \"Швейцарская\",\n      \"status\": \"registration\",\n      \"status_label\": \"Регистрация\",\n      \"location\": \"Астана, шахматный клуб «Гамбит»\",\n      \"start_date\": \"2026-12-05\",\n      \"end_date\": \"2026-12-07\",\n      \"registration_deadline\": \"2026-12-04T18:00:00+05:00\",\n      \"is_registration_open\": true,\n      \"max_participants\": 24,\n      \"rounds_count\": 7,\n      \"min_rating\": 1500,\n      \"poster_url\": null,\n      \"organizer_id\": 2,\n      \"organizer\": {\n        \"id\": 2,\n        \"name\": \"Ержан Сапаров\",\n        \"rating\": 1850\n      },\n      \"time_control\": {\n        \"id\": 2,\n        \"name\": \"Блиц 3+2\",\n        \"type\": \"blitz\",\n        \"type_label\": \"Блиц\",\n        \"base_minutes\": 3,\n        \"increment_seconds\": 2,\n        \"short\": \"3+2\"\n      },\n      \"participants_count\": 12,\n      \"rounds_created\": 0,\n      \"created_at\": \"2026-11-19T10:00:00+05:00\",\n      \"updated_at\": \"2026-11-19T10:00:00+05:00\",\n      \"my_registration\": {\n        \"status\": \"pending\",\n        \"start_number\": null\n      }\n    }\n  ]\n}"
+            }
+          ]
         },
         {
           "name": "Мои партии",
@@ -994,8 +2901,101 @@
                 "games"
               ]
             },
-            "description": ""
-          }
+            "description": "Все партии текущего игрока с туром и турниром.\n\n**Доступ:** любой авторизованный пользователь.\n\n**Коды ответов:** 200 OK."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/my/games",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "my",
+                    "games"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 10,\n      \"round_id\": 5,\n      \"board_number\": 1,\n      \"white\": {\n        \"id\": 4,\n        \"name\": \"Данияр Сейткали\",\n        \"rating\": 1620\n      },\n      \"black\": {\n        \"id\": 5,\n        \"name\": \"Алия Касымова\",\n        \"rating\": 1820\n      },\n      \"is_bye\": false,\n      \"result\": \"white_win\",\n      \"result_label\": \"Победа белых\",\n      \"result_notation\": \"1-0\",\n      \"pgn\": \"1. e4 e5 2. Nf3 1-0\",\n      \"round\": {\n        \"id\": 5,\n        \"number\": 3,\n        \"tournament\": {\n          \"id\": 2,\n          \"title\": \"Блиц-арена\"\n        }\n      }\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Заявка на закрытую регистрацию (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/1/registration",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "1",
+                "registration"
+              ]
+            },
+            "description": "Нарушение бизнес-правила: турнир №1 уже завершён, регистрация закрыта — 409 Conflict.\n\n**Доступ:** игрок (player).\n\n**Параметры:** Выполните сначала «Вход: игрок».\n\n**Коды ответов:** 409 Conflict."
+          },
+          "response": [
+            {
+              "name": "409 Conflict",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/1/registration",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "1",
+                    "registration"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Регистрация на турнир закрыта\"\n}"
+            }
+          ]
         }
       ]
     },
@@ -1023,11 +3023,49 @@
                 "rounds"
               ]
             },
-            "description": "",
+            "description": "Туры с парами и результатами.\n\n**Доступ:** без авторизации.\n\n**Коды ответов:** 200 OK.",
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/2/rounds",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "2",
+                    "rounds"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 5,\n      \"tournament_id\": 2,\n      \"number\": 3,\n      \"starts_at\": \"2026-11-20T19:00:00+05:00\",\n      \"status\": \"ongoing\",\n      \"status_label\": \"Идёт\",\n      \"games\": [\n        {\n          \"id\": 10,\n          \"round_id\": 5,\n          \"board_number\": 1,\n          \"white\": {\n            \"id\": 4,\n            \"name\": \"Данияр Сейткали\",\n            \"rating\": 1620\n          },\n          \"black\": {\n            \"id\": 5,\n            \"name\": \"Алия Касымова\",\n            \"rating\": 1820\n          },\n          \"is_bye\": false,\n          \"result\": \"white_win\",\n          \"result_label\": \"Победа белых\",\n          \"result_notation\": \"1-0\",\n          \"pgn\": \"1. e4 e5 2. Nf3 1-0\"\n        }\n      ]\n    }\n  ]\n}"
+            }
+          ]
         },
         {
           "name": "Создать тур (автожеребьёвка)",
@@ -1054,7 +3092,7 @@
                 "rounds"
               ]
             },
-            "description": "Пока предыдущий тур не завершён — 409",
+            "description": "Новый тур с автоматической жеребьёвкой (швейцарская или круговая система). Только для турнира в статусе «Идёт» и после завершения предыдущего тура.\n\n**Доступ:** организатор турнира или администратор.\n\n**Параметры:** Тело: `auto_pairing: true`, `starts_at` (необязательно).\n\n**Коды ответов:** 201 Created, 409 Conflict.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"auto_pairing\": true,\n  \"starts_at\": \"2026-11-20 19:00:00\"\n}",
@@ -1064,7 +3102,147 @@
                 }
               }
             }
-          }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/2/rounds",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "2",
+                    "rounds"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"auto_pairing\": true,\n  \"starts_at\": \"2026-11-20 19:00:00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 5,\n    \"tournament_id\": 2,\n    \"number\": 3,\n    \"starts_at\": \"2026-11-20T19:00:00+05:00\",\n    \"status\": \"ongoing\",\n    \"status_label\": \"Идёт\",\n    \"games\": [\n      {\n        \"id\": 10,\n        \"round_id\": 5,\n        \"board_number\": 1,\n        \"white\": {\n          \"id\": 4,\n          \"name\": \"Данияр Сейткали\",\n          \"rating\": 1620\n        },\n        \"black\": {\n          \"id\": 5,\n          \"name\": \"Алия Касымова\",\n          \"rating\": 1820\n        },\n        \"is_bye\": false,\n        \"result\": \"pending\",\n        \"result_label\": \"Не сыграна\",\n        \"result_notation\": \"*\",\n        \"pgn\": null\n      }\n    ]\n  }\n}"
+            },
+            {
+              "name": "409 предыдущий тур",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/2/rounds",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "2",
+                    "rounds"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"auto_pairing\": true,\n  \"starts_at\": \"2026-11-20 19:00:00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Сначала завершите тур №2\"\n}"
+            },
+            {
+              "name": "409 турнир не идёт",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/2/rounds",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "2",
+                    "rounds"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"auto_pairing\": true,\n  \"starts_at\": \"2026-11-20 19:00:00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Туры можно создавать только в турнире со статусом «Идёт»\"\n}"
+            }
+          ]
         },
         {
           "name": "Создать тур (ручная жеребьёвка)",
@@ -1091,7 +3269,7 @@
                 "rounds"
               ]
             },
-            "description": "",
+            "description": "Тур с парами, заданными судьёй вручную. Каждый игрок должен быть допущенным участником и встречаться в туре один раз.\n\n**Доступ:** организатор турнира или администратор.\n\n**Параметры:** Тело: `auto_pairing: false`, `pairings[]` — `white_player_id`, `black_player_id` (null — игрок без пары).\n\n**Коды ответов:** 201 Created, 409 Conflict.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"auto_pairing\": false,\n  \"pairings\": [\n    {\n      \"white_player_id\": 4,\n      \"black_player_id\": 5\n    },\n    {\n      \"white_player_id\": 6,\n      \"black_player_id\": 8\n    },\n    {\n      \"white_player_id\": 9,\n      \"black_player_id\": null\n    }\n  ]\n}",
@@ -1101,7 +3279,101 @@
                 }
               }
             }
-          }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/2/rounds",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "2",
+                    "rounds"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"auto_pairing\": false,\n  \"pairings\": [\n    {\n      \"white_player_id\": 4,\n      \"black_player_id\": 5\n    },\n    {\n      \"white_player_id\": 6,\n      \"black_player_id\": 8\n    },\n    {\n      \"white_player_id\": 9,\n      \"black_player_id\": null\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 5,\n    \"tournament_id\": 2,\n    \"number\": 3,\n    \"starts_at\": \"2026-11-20T19:00:00+05:00\",\n    \"status\": \"ongoing\",\n    \"status_label\": \"Идёт\",\n    \"games\": [\n      {\n        \"id\": 10,\n        \"round_id\": 5,\n        \"board_number\": 1,\n        \"white\": {\n          \"id\": 4,\n          \"name\": \"Данияр Сейткали\",\n          \"rating\": 1620\n        },\n        \"black\": {\n          \"id\": 5,\n          \"name\": \"Алия Касымова\",\n          \"rating\": 1820\n        },\n        \"is_bye\": false,\n        \"result\": \"white_win\",\n        \"result_label\": \"Победа белых\",\n        \"result_notation\": \"1-0\",\n        \"pgn\": \"1. e4 e5 2. Nf3 1-0\"\n      }\n    ]\n  }\n}"
+            },
+            {
+              "name": "409 игрок дважды",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tournaments/2/rounds",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tournaments",
+                    "2",
+                    "rounds"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"auto_pairing\": false,\n  \"pairings\": [\n    {\n      \"white_player_id\": 4,\n      \"black_player_id\": 5\n    },\n    {\n      \"white_player_id\": 6,\n      \"black_player_id\": 8\n    },\n    {\n      \"white_player_id\": 9,\n      \"black_player_id\": null\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Игрок #4 указан в туре дважды\"\n}"
+            }
+          ]
         },
         {
           "name": "Внести результат партии",
@@ -1127,7 +3399,7 @@
                 "10"
               ]
             },
-            "description": "",
+            "description": "Судья вносит результат и (необязательно) запись PGN. Таблица пересчитывается.\n\n**Доступ:** организатор турнира или администратор.\n\n**Параметры:** Тело: `result` (white_win | black_win | draw | pending), `pgn`.\n\n**Коды ответов:** 200 OK, 409 Conflict.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"result\": \"white_win\",\n  \"pgn\": \"1. e4 e5 2. Nf3 1-0\"\n}",
@@ -1137,7 +3409,99 @@
                 }
               }
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/games/10",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "games",
+                    "10"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"result\": \"white_win\",\n  \"pgn\": \"1. e4 e5 2. Nf3 1-0\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 10,\n    \"round_id\": 5,\n    \"board_number\": 1,\n    \"white\": {\n      \"id\": 4,\n      \"name\": \"Данияр Сейткали\",\n      \"rating\": 1620\n    },\n    \"black\": {\n      \"id\": 5,\n      \"name\": \"Алия Касымова\",\n      \"rating\": 1820\n    },\n    \"is_bye\": false,\n    \"result\": \"white_win\",\n    \"result_label\": \"Победа белых\",\n    \"result_notation\": \"1-0\",\n    \"pgn\": \"1. e4 e5 2. Nf3 1-0\"\n  }\n}"
+            },
+            {
+              "name": "409 тур завершён",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/games/10",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "games",
+                    "10"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"result\": \"white_win\",\n  \"pgn\": \"1. e4 e5 2. Nf3 1-0\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Тур не идёт — результат партии изменить нельзя\"\n}"
+            }
+          ]
         },
         {
           "name": "Завершить тур",
@@ -1160,8 +3524,76 @@
                 "complete"
               ]
             },
-            "description": "Есть партии без результата — 409"
-          }
+            "description": "Закрывает тур, если внесены все результаты.\n\n**Доступ:** организатор турнира или администратор.\n\n**Коды ответов:** 200 OK, 409 Conflict."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/rounds/5/complete",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "rounds",
+                    "5",
+                    "complete"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 5,\n    \"tournament_id\": 2,\n    \"number\": 3,\n    \"starts_at\": \"2026-11-20T19:00:00+05:00\",\n    \"status\": \"completed\",\n    \"status_label\": \"Завершён\",\n    \"games\": [\n      {\n        \"id\": 10,\n        \"round_id\": 5,\n        \"board_number\": 1,\n        \"white\": {\n          \"id\": 4,\n          \"name\": \"Данияр Сейткали\",\n          \"rating\": 1620\n        },\n        \"black\": {\n          \"id\": 5,\n          \"name\": \"Алия Касымова\",\n          \"rating\": 1820\n        },\n        \"is_bye\": false,\n        \"result\": \"white_win\",\n        \"result_label\": \"Победа белых\",\n        \"result_notation\": \"1-0\",\n        \"pgn\": \"1. e4 e5 2. Nf3 1-0\"\n      }\n    ]\n  }\n}"
+            },
+            {
+              "name": "409 есть несыгранные",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/rounds/5/complete",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "rounds",
+                    "5",
+                    "complete"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Нельзя завершить тур: не внесено результатов — 2\"\n}"
+            }
+          ]
         },
         {
           "name": "Удалить последний тур",
@@ -1183,8 +3615,69 @@
                 "5"
               ]
             },
-            "description": ""
-          }
+            "description": "Удаление тура: только последнего и только без результатов.\n\n**Доступ:** организатор турнира или администратор.\n\n**Коды ответов:** 204 No Content, 409 Conflict."
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/rounds/5",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "rounds",
+                    "5"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": ""
+            },
+            {
+              "name": "409 есть результаты",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/rounds/5",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "rounds",
+                    "5"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"В туре уже есть результаты, удалить его нельзя\"\n}"
+            }
+          ]
         }
       ]
     },
@@ -1210,11 +3703,47 @@
                 "time-controls"
               ]
             },
-            "description": "",
+            "description": "Справочник контролей времени с числом турниров.\n\n**Доступ:** без авторизации.\n\n**Коды ответов:** 200 OK.",
             "auth": {
               "type": "noauth"
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/time-controls",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "time-controls"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 2,\n      \"name\": \"Блиц 3+2\",\n      \"type\": \"blitz\",\n      \"type_label\": \"Блиц\",\n      \"base_minutes\": 3,\n      \"increment_seconds\": 2,\n      \"short\": \"3+2\",\n      \"tournaments_count\": 3\n    }\n  ]\n}"
+            }
+          ]
         },
         {
           "name": "Создать контроль времени",
@@ -1239,7 +3768,7 @@
                 "time-controls"
               ]
             },
-            "description": "",
+            "description": "Добавление контроля времени в справочник.\n\n**Доступ:** администратор.\n\n**Параметры:** Тело: `name`, `type` (classical | rapid | blitz | bullet), `base_minutes`, `increment_seconds`.\n\n**Коды ответов:** 201 Created, 403 Forbidden.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Рапид 25+10\",\n  \"type\": \"rapid\",\n  \"base_minutes\": 25,\n  \"increment_seconds\": 10\n}",
@@ -1249,7 +3778,97 @@
                 }
               }
             }
-          }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/time-controls",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "time-controls"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Рапид 25+10\",\n  \"type\": \"rapid\",\n  \"base_minutes\": 25,\n  \"increment_seconds\": 10\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 6,\n    \"name\": \"Рапид 25+10\",\n    \"type\": \"rapid\",\n    \"type_label\": \"Рапид\",\n    \"base_minutes\": 25,\n    \"increment_seconds\": 10,\n    \"short\": \"25+10\"\n  }\n}"
+            },
+            {
+              "name": "403 не администратор",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/time-controls",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "time-controls"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Рапид 25+10\",\n  \"type\": \"rapid\",\n  \"base_minutes\": 25,\n  \"increment_seconds\": 10\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Недостаточно прав для выполнения действия\"\n}"
+            }
+          ]
         },
         {
           "name": "Изменить контроль времени",
@@ -1275,7 +3894,7 @@
                 "5"
               ]
             },
-            "description": "",
+            "description": "Частичное изменение контроля времени.\n\n**Доступ:** администратор.\n\n**Коды ответов:** 200 OK.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"increment_seconds\": 1\n}",
@@ -1285,7 +3904,54 @@
                 }
               }
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/time-controls/5",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "time-controls",
+                    "5"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"increment_seconds\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 2,\n    \"name\": \"Блиц 3+2\",\n    \"type\": \"blitz\",\n    \"type_label\": \"Блиц\",\n    \"base_minutes\": 3,\n    \"increment_seconds\": 1,\n    \"short\": \"3+1\"\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Удалить используемый контроль (409)",
@@ -1307,8 +3973,42 @@
                 "2"
               ]
             },
-            "description": ""
-          }
+            "description": "Контроль, который используют турниры, удалить нельзя — 409 (внешний ключ restrictOnDelete).\n\n**Доступ:** администратор.\n\n**Коды ответов:** 409 Conflict."
+          },
+          "response": [
+            {
+              "name": "409 Conflict",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/time-controls/2",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "time-controls",
+                    "2"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Контроль времени используется в турнирах, удалить его нельзя\"\n}"
+            }
+          ]
         },
         {
           "name": "Пользователи",
@@ -1343,8 +4043,55 @@
                 }
               ]
             },
-            "description": ""
-          }
+            "description": "Список пользователей с фильтром по роли и поиском.\n\n**Доступ:** администратор.\n\n**Параметры:** Query: `role`, `search`, `per_page`.\n\n**Коды ответов:** 200 OK."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/users?role=player&search=&per_page=20",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "users"
+                  ],
+                  "query": [
+                    {
+                      "key": "role",
+                      "value": "player"
+                    },
+                    {
+                      "key": "search",
+                      "value": ""
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 4,\n      \"name\": \"Данияр Сейткали\",\n      \"email\": \"player@chess.test\",\n      \"role\": \"player\",\n      \"role_label\": \"Игрок\",\n      \"rating\": 1620,\n      \"created_at\": \"2026-11-19T10:00:00+05:00\"\n    }\n  ],\n  \"meta\": {\n    \"current_page\": 1,\n    \"last_page\": 1,\n    \"per_page\": 20,\n    \"total\": 1\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Изменить роль/рейтинг",
@@ -1370,7 +4117,7 @@
                 "9"
               ]
             },
-            "description": "",
+            "description": "Изменение роли и рейтинга пользователя. Свою роль администратор изменить не может.\n\n**Доступ:** администратор.\n\n**Параметры:** Тело: `role`, `rating`.\n\n**Коды ответов:** 200 OK.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"role\": \"player\",\n  \"rating\": 1420\n}",
@@ -1380,7 +4127,54 @@
                 }
               }
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/users/9",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "users",
+                    "9"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"role\": \"player\",\n  \"rating\": 1420\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 9,\n    \"name\": \"Асель Ермекова\",\n    \"email\": \"asel@chess.test\",\n    \"role\": \"player\",\n    \"role_label\": \"Игрок\",\n    \"rating\": 1420,\n    \"created_at\": \"2026-11-19T10:00:00+05:00\"\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Удалить игрока с партиями (409)",
@@ -1402,8 +4196,42 @@
                 "4"
               ]
             },
-            "description": ""
-          }
+            "description": "Пользователя, у которого есть сыгранные партии, удалить нельзя.\n\n**Доступ:** администратор.\n\n**Коды ответов:** 409 Conflict."
+          },
+          "response": [
+            {
+              "name": "409 Conflict",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/users/4",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "users",
+                    "4"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"У пользователя есть сыгранные партии, удалить его нельзя\"\n}"
+            }
+          ]
         },
         {
           "name": "Статистика",
@@ -1425,8 +4253,42 @@
                 "overview"
               ]
             },
-            "description": ""
-          }
+            "description": "Сводка для администратора: турниры по статусам, партии по результатам, самые активные игроки.\n\n**Доступ:** администратор.\n\n**Коды ответов:** 200 OK."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/stats/overview",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "stats",
+                    "overview"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"tournaments\": {\n      \"total\": 8,\n      \"by_status\": {\n        \"draft\": 1,\n        \"registration\": 3,\n        \"ongoing\": 1,\n        \"finished\": 2,\n        \"cancelled\": 1\n      }\n    },\n    \"games\": {\n      \"total\": 42,\n      \"by_result\": {\n        \"white_win\": 17,\n        \"black_win\": 12,\n        \"draw\": 9,\n        \"pending\": 4\n      }\n    },\n    \"most_active_players\": [\n      {\n        \"id\": 5,\n        \"name\": \"Алия Касымова\",\n        \"games_played\": 12\n      }\n    ]\n  }\n}"
+            }
+          ]
         }
       ]
     }
