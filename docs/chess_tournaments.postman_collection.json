@@ -1,0 +1,1434 @@
+{
+  "info": {
+    "name": "Шахматные турниры API",
+    "description": "REST API системы организации и проведения шахматных турниров (Laravel 12 + Sanctum).\n\nПеред запуском: php artisan migrate:fresh --seed. Учётные записи: admin@chess.test, organizer@chess.test, player@chess.test, пароль password.\n\nВо всех запросах заголовок Accept: application/json. Токен сохраняется в переменную {{token}} скриптом после входа.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "tournament_id",
+      "value": "3"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Health",
+      "item": [
+        {
+          "name": "GET /api/health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/api/health",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Аутентификация",
+      "item": [
+        {
+          "name": "Регистрация",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "register"
+              ]
+            },
+            "description": "201 + токен. Роль — player.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Новый Игрок\",\n  \"email\": \"new@chess.test\",\n  \"password\": \"secret123\",\n  \"password_confirmation\": \"secret123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('token', json.token); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Регистрация — ошибка валидации (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "register"
+              ]
+            },
+            "description": "422, errors по полям",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"email\": \"not-an-email\",\n  \"password\": \"1\",\n  \"password_confirmation\": \"2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Вход: администратор",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@chess.test\",\n  \"password\": \"password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('token', json.token); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: организатор",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"organizer@chess.test\",\n  \"password\": \"password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('token', json.token); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: игрок",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"player@chess.test\",\n  \"password\": \"password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('token', json.token); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход — неверный пароль (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "401 «Неверный email или пароль»",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"player@chess.test\",\n  \"password\": \"wrong\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Текущий пользователь",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Без токена (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user"
+              ]
+            },
+            "description": "Ожидается 401 «Требуется авторизация»",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Выход",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "logout"
+              ]
+            },
+            "description": "204, токен удаляется"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Турниры",
+      "item": [
+        {
+          "name": "Список с фильтрами и пагинацией",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments?status=registration&search=&sort=start_date&order=asc&page=1&per_page=5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "registration"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "sort",
+                  "value": "start_date"
+                },
+                {
+                  "key": "order",
+                  "value": "asc"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Фильтр по формату и датам",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments?format=swiss&date_from=2026-01-01&date_to=2027-12-31",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "swiss"
+                },
+                {
+                  "key": "date_from",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2027-12-31"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Недопустимая сортировка (422)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments?sort=password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "password"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Карточка турнира",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/{{tournament_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "{{tournament_id}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Несуществующий турнир (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/99999",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "99999"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Создать (организатор)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments"
+              ]
+            },
+            "description": "201. Под игроком — 403",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"time_control_id\": 2,\n  \"title\": \"Кубок весны\",\n  \"description\": \"Открытый турнир по рапиду\",\n  \"format\": \"swiss\",\n  \"location\": \"Шахматный клуб\",\n  \"start_date\": \"2027-03-14\",\n  \"end_date\": \"2027-03-15\",\n  \"registration_deadline\": \"2027-03-12 23:59:00\",\n  \"max_participants\": 16,\n  \"rounds_count\": 5,\n  \"min_rating\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('tournament_id', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Создать — даты с ошибкой (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"time_control_id\": 2,\n  \"title\": \"Кубок весны\",\n  \"description\": \"Открытый турнир по рапиду\",\n  \"format\": \"swiss\",\n  \"location\": \"Шахматный клуб\",\n  \"start_date\": \"2027-03-14\",\n  \"end_date\": \"2027-03-01\",\n  \"registration_deadline\": \"2027-03-12 23:59:00\",\n  \"max_participants\": 16,\n  \"rounds_count\": 5,\n  \"min_rating\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Изменить",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/{{tournament_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "{{tournament_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Кубок весны 2027\",\n  \"max_participants\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Сменить статус",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/{{tournament_id}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "{{tournament_id}}",
+                "status"
+              ]
+            },
+            "description": "draft → registration → ongoing → finished; недопустимый переход — 409",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"registration\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Загрузить афишу",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/{{tournament_id}}/poster",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "{{tournament_id}}",
+                "poster"
+              ]
+            },
+            "description": "multipart/form-data, image до 2 МБ",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "poster",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Удалить",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/{{tournament_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "{{tournament_id}}"
+              ]
+            },
+            "description": "204; если есть партии — 409"
+          }
+        },
+        {
+          "name": "Турнирная таблица",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/1/standings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "1",
+                "standings"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Участники (ключевой сценарий)",
+      "item": [
+        {
+          "name": "Участники турнира",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/{{tournament_id}}/participants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "{{tournament_id}}",
+                "participants"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Подать заявку (игрок)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/{{tournament_id}}/registration",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "{{tournament_id}}",
+                "registration"
+              ]
+            },
+            "description": "201; закрыта регистрация / нет мест / низкий рейтинг — 409"
+          }
+        },
+        {
+          "name": "Отозвать заявку (игрок)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/{{tournament_id}}/registration",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "{{tournament_id}}",
+                "registration"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Допустить игрока (организатор)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/{{tournament_id}}/participants/5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "{{tournament_id}}",
+                "participants",
+                "5"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\",\n  \"start_number\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Мои турниры",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/my/tournaments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "my",
+                "tournaments"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Мои партии",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/my/games",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "my",
+                "games"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Туры и партии",
+      "item": [
+        {
+          "name": "Туры турнира",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/2/rounds",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "2",
+                "rounds"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Создать тур (автожеребьёвка)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/2/rounds",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "2",
+                "rounds"
+              ]
+            },
+            "description": "Пока предыдущий тур не завершён — 409",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auto_pairing\": true,\n  \"starts_at\": \"2026-11-20 19:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Создать тур (ручная жеребьёвка)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tournaments/2/rounds",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tournaments",
+                "2",
+                "rounds"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auto_pairing\": false,\n  \"pairings\": [\n    {\n      \"white_player_id\": 4,\n      \"black_player_id\": 5\n    },\n    {\n      \"white_player_id\": 6,\n      \"black_player_id\": 8\n    },\n    {\n      \"white_player_id\": 9,\n      \"black_player_id\": null\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Внести результат партии",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games/10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "10"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"result\": \"white_win\",\n  \"pgn\": \"1. e4 e5 2. Nf3 1-0\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Завершить тур",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rounds/5/complete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "rounds",
+                "5",
+                "complete"
+              ]
+            },
+            "description": "Есть партии без результата — 409"
+          }
+        },
+        {
+          "name": "Удалить последний тур",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rounds/5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "rounds",
+                "5"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Администратор",
+      "item": [
+        {
+          "name": "Контроли времени",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/time-controls",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "time-controls"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Создать контроль времени",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/time-controls",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "time-controls"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Рапид 25+10\",\n  \"type\": \"rapid\",\n  \"base_minutes\": 25,\n  \"increment_seconds\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Изменить контроль времени",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/time-controls/5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "time-controls",
+                "5"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"increment_seconds\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Удалить используемый контроль (409)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/time-controls/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "time-controls",
+                "2"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Пользователи",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users?role=player&search=&per_page=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "player"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Изменить роль/рейтинг",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/9",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "9"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"player\",\n  \"rating\": 1420\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Удалить игрока с партиями (409)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/4",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "4"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Статистика",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/stats/overview",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "stats",
+                "overview"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    }
+  ]
+}
