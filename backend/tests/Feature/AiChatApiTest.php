@@ -86,6 +86,24 @@ class AiChatApiTest extends TestCase
             ->assertJsonPath('message', 'ИИ-ассистент временно недоступен, попробуйте позже');
     }
 
+    public function test_switches_to_available_model_when_configured_one_is_gone(): void
+    {
+        Http::fake([
+            'generativelanguage.googleapis.com/v1beta/models/gemini-test:generateContent' => Http::response(['error' => ['message' => 'not found']], 404),
+            'generativelanguage.googleapis.com/v1beta/models?*' => Http::response(['models' => [
+                ['name' => 'models/gemini-9-flash', 'supportedGenerationMethods' => ['generateContent']],
+                ['name' => 'models/text-embedding-9', 'supportedGenerationMethods' => ['embedContent']],
+            ]]),
+            'generativelanguage.googleapis.com/v1beta/models/gemini-9-flash:generateContent' => Http::response([
+                'candidates' => [['content' => ['parts' => [['text' => 'Ответ новой модели']]]]],
+            ]),
+        ]);
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson(self::URL, ['messages' => [['role' => 'user', 'content' => 'Привет']]])
+            ->assertOk()->assertJsonPath('data.content', 'Ответ новой модели');
+    }
+
     public function test_returns_503_without_api_key(): void
     {
         config(['services.gemini.key' => null]);

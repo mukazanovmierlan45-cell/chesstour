@@ -7,6 +7,7 @@ use App\Exceptions\AiServiceException;
 use App\Models\Tournament;
 use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -38,19 +39,19 @@ class AiChatService
             'generationConfig' => ['temperature' => 0.7, 'maxOutputTokens' => 800],
         ];
 
-        try {
-            $response = Http::withHeaders(['x-goog-api-key' => $key])
-                ->timeout((int) config('services.gemini.timeout', 20))
-                ->acceptJson()
-                ->post(sprintf(self::ENDPOINT, config('services.gemini.model')), $payload);
-        } catch (ConnectionException $e) {
-            Log::warning('Gemini: нет соединения', ['error' => $e->getMessage()]);
-            throw new AiServiceException();
+        $model = Cache::get('gemini.model', config('services.gemini.model'));
+        $response = $this->send($key, $model, $payload);
+
+        // модель из настроек снята с поддержки (404) — берём доступную flash-модель из списка Google
+        if ($response->status() === 404 && ($fallback = $this->discoverModel($key)) && $fallback !== $model) {
+            Log::info('Gemini: модель заменена', ['from' => $model, 'to' => $fallback]);
+            Cache::put('gemini.model', $fallback, now()->addDay());
+            $response = $this->send($key, $fallback, $payload);
         }
 
         if ($response->failed()) {
             // сам ключ в журнал не пишется
-            Log::warning('Gemini: ошибка ответа', ['status' => $response->status()]);
+            Log::warning('Gemini: ошибка ответа', ['status' => $response->status(), 'error' => $response->json('error.message')]);
             throw new AiServiceException();
         }
 
@@ -62,6 +63,38 @@ class AiChatService
         Log::info('Gemini: ответ ассистента', ['user_id' => $user->id, 'messages' => count($messages)]);
 
         return $text;
+    }
+
+    private function send(string $key, string $model, array $payload): \Illuminate\Http\Client\Response
+    {
+        try {
+            return Http::withHeaders(['x-goog-api-key' => $key])
+                ->timeout((int) config('services.gemini.timeout', 20))
+                ->acceptJson()
+                ->post(sprintf(self::ENDPOINT, $model), $payload);
+        } catch (ConnectionException $e) {
+            Log::warning('Gemini: нет соединения', ['error' => $e->getMessage()]);
+            throw new AiServiceException();
+        }
+    }
+
+    /** Первая доступная модель семейства flash, поддерживающая generateContent. */
+    private function discoverModel(string $key): ?string
+    {
+        try {
+            $models = Http::withHeaders(['x-goog-api-key' => $key])->timeout(10)
+                ->get('https://generativelanguage.googleapis.com/v1beta/models', ['pageSize' => 200])
+                ->json('models', []);
+        } catch (ConnectionException) {
+            return null;
+        }
+        $names = collect($models)
+            ->filter(fn ($m) => in_array('generateContent', $m['supportedGenerationMethods'] ?? [], true))
+            ->pluck('name')
+            ->map(fn ($n) => str_replace('models/', '', $n))
+            ->filter(fn ($n) => str_contains($n, 'flash') && ! preg_match('/(tts|image|audio|live|embedding|preview|exp)/', $n));
+
+        return $names->sortDesc()->first() ?? null;
     }
 
     /** Системная инструкция: роль бота, правила и контекст клуба из БД. */
