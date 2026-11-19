@@ -57,7 +57,7 @@ export function checkRequired(form, fields) {
 export const formData = (form) => Object.fromEntries(new FormData(form).entries());
 
 /** Аватар с инициалами; цвет стабильно зависит от имени. */
-const AVATAR_COLORS = ['#13233f', '#007b96', '#8a5a34', '#1f8a5c', '#6a4fb3', '#b86e00'];
+const AVATAR_COLORS = ['#111111', '#3d3d3b', '#8b5a33', '#c62828', '#5e5e5a', '#26405e'];
 export function avatar(name = '', size = '') {
   const letters = String(name).split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   let hash = 0;

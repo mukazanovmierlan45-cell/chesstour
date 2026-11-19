@@ -1,5 +1,6 @@
 import { api } from '../api.js';
 import { getUser, hasRole } from '../auth.js';
+import { pieceSVG } from '../pieces.js';
 import { avatar, badge, esc, flash, formatDate, formatDateTime } from '../ui.js';
 
 const NEXT_STATUS = {
@@ -33,7 +34,7 @@ export async function tournamentPage(root, id) {
         <p>${esc(t.description || 'Организатор пока не добавил описание турнира.')}</p>
         <div class="actions" id="player-actions" style="margin-top:20px"></div>
       </div>
-      ${t.poster_url ? `<img class="poster" src="${esc(t.poster_url)}" alt="Афиша турнира">` : ''}
+      ${t.poster_url ? `<img class="poster" src="${esc(t.poster_url)}" alt="Афиша турнира">` : `<div class="t-hero-art" aria-hidden="true">${pieceSVG('k', 'w')}${pieceSVG('q', 'b')}</div>`}
     </section>
     <div class="t-facts">
       <div><span>Даты</span><b>${formatDate(t.start_date)} – ${formatDate(t.end_date)}</b></div>

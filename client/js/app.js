@@ -2,6 +2,7 @@ import { api } from './api.js';
 import { getToken, getUser, setUser, clearSession, hasRole } from './auth.js';
 import { avatar, esc, flash } from './ui.js';
 import { API_BASE_URL } from './config.js';
+import { PIECE_DEFS, pieceSVG } from './pieces.js';
 import { homePage } from './pages/home.js';
 import { loginPage, registerPage } from './pages/auth.js';
 import { tournamentsPage } from './pages/tournaments.js';
@@ -122,6 +123,9 @@ function setMenu(open) {
 toggle.addEventListener('click', () => setMenu(!document.body.classList.contains('menu-open')));
 const topbar = document.querySelector('.topbar');
 window.addEventListener('scroll', () => topbar.classList.toggle('scrolled', window.scrollY > 8), { passive: true });
+
+document.body.insertAdjacentHTML('afterbegin', PIECE_DEFS);
+document.querySelectorAll('.brand-mark').forEach((mark) => { mark.innerHTML = pieceSVG('k', 'w'); });
 
 document.getElementById('year').textContent = new Date().getFullYear();
 window.addEventListener('hashchange', router);
