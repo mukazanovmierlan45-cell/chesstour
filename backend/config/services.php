@@ -42,4 +42,16 @@ return [
         'timeout' => (int) env('GEMINI_TIMEOUT', 20),
     ],
 
+    // Провайдер ИИ-ассистента: gemini или groq (переключается в .env через AI_PROVIDER)
+    'ai' => [
+        'provider' => env('AI_PROVIDER', 'gemini'),
+    ],
+
+    // Groq API (OpenAI-совместимый). Ключ — только в .env
+    'groq' => [
+        'key' => env('GROQ_API_KEY'),
+        'model' => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+        'timeout' => (int) env('GROQ_TIMEOUT', 30),
+    ],
+
 ];

@@ -23,7 +23,7 @@ class AiChatApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['services.gemini.key' => 'test-key', 'services.gemini.model' => 'gemini-test']);
+        config(['services.ai.provider' => 'gemini', 'services.gemini.key' => 'test-key', 'services.gemini.model' => 'gemini-test']);
     }
 
     private function fakeReply(string $text = 'Начните с дебюта 1. e4.'): void
@@ -113,5 +113,22 @@ class AiChatApiTest extends TestCase
         $this->postJson(self::URL, ['messages' => [['role' => 'user', 'content' => 'Привет']]])
             ->assertStatus(503);
         Http::assertNothingSent();
+    }
+
+    public function test_groq_provider_returns_reply(): void
+    {
+        config(['services.ai.provider' => 'groq', 'services.groq.key' => 'test-key', 'services.groq.model' => 'groq-test']);
+        Http::fake(['api.groq.com/*' => Http::response([
+            'choices' => [['message' => ['role' => 'assistant', 'content' => 'Играйте 1. d4.']]],
+        ])]);
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson(self::URL, ['messages' => [['role' => 'user', 'content' => 'Какой дебют выбрать?']]])
+            ->assertOk()
+            ->assertJsonPath('data.content', 'Играйте 1. d4.');
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.groq.com/openai/v1/chat/completions')
+            && $request['model'] === 'groq-test'
+            && $request['messages'][0]['role'] === 'system');
     }
 }

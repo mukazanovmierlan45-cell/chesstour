@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Чат с ИИ-ассистентом клуба «Гамбит-бот» через Google Gemini (generateContent).
+ * Чат с ИИ-ассистентом клуба «Гамбит-бот» через Google Gemini (generateContent)
+ * или Groq (OpenAI-совместимый chat/completions) — провайдер задаётся AI_PROVIDER в .env.
  * История диалога хранится на клиенте и передаётся целиком; сервер добавляет
  * системную инструкцию с актуальными турнирами клуба из базы данных.
  */
@@ -25,6 +26,10 @@ class AiChatService
      */
     public function reply(User $user, array $messages): string
     {
+        if (config('services.ai.provider') === 'groq') {
+            return $this->replyGroq($user, $messages);
+        }
+
         $key = config('services.gemini.key');
         if (! $key) {
             throw new AiServiceException('ИИ-ассистент не настроен: укажите GEMINI_API_KEY в .env');
@@ -65,12 +70,69 @@ class AiChatService
         return $text;
     }
 
+    private const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
+
+    /**
+     * Ответ через Groq: формат OpenAI — системное сообщение + история диалога.
+     *
+     * @param  array<int, array{role: string, content: string}>  $messages
+     */
+    private function replyGroq(User $user, array $messages): string
+    {
+        $key = config('services.groq.key');
+        if (! $key) {
+            throw new AiServiceException('ИИ-ассистент не настроен: укажите GROQ_API_KEY в .env');
+        }
+
+        $payload = [
+            'model' => config('services.groq.model'),
+            'messages' => array_merge(
+                [['role' => 'system', 'content' => $this->systemPrompt($user)]],
+                array_map(fn (array $m) => [
+                    'role' => $m['role'] === 'assistant' ? 'assistant' : 'user',
+                    'content' => $m['content'],
+                ], $messages),
+            ),
+            'temperature' => 0.7,
+            'max_tokens' => 800,
+        ];
+
+        try {
+            $response = Http::withToken($key)
+                ->timeout((int) config('services.groq.timeout', 30))
+                ->acceptJson()
+                ->retry(2, 1000, fn ($e) => $e instanceof \Illuminate\Http\Client\RequestException
+                    && in_array($e->response->status(), [429, 503], true), throw: false)
+                ->post(self::GROQ_ENDPOINT, $payload);
+        } catch (ConnectionException $e) {
+            Log::warning('Groq: нет соединения', ['error' => $e->getMessage()]);
+            throw new AiServiceException();
+        }
+
+        if ($response->failed()) {
+            Log::warning('Groq: ошибка ответа', ['status' => $response->status(), 'error' => $response->json('error.message')]);
+            throw new AiServiceException();
+        }
+
+        $text = trim((string) $response->json('choices.0.message.content', ''));
+        if ($text === '') {
+            throw new AiServiceException('ИИ-ассистент не смог ответить на этот вопрос, попробуйте переформулировать');
+        }
+
+        Log::info('Groq: ответ ассистента', ['user_id' => $user->id, 'messages' => count($messages)]);
+
+        return $text;
+    }
+
     private function send(string $key, string $model, array $payload): \Illuminate\Http\Client\Response
     {
         try {
             return Http::withHeaders(['x-goog-api-key' => $key])
                 ->timeout((int) config('services.gemini.timeout', 20))
                 ->acceptJson()
+                // Gemini иногда отвечает 503 (перегрузка) — повторяем до 3 раз с паузой
+                ->retry(3, 1500, fn ($e) => $e instanceof \Illuminate\Http\Client\RequestException
+                    && $e->response->status() === 503, throw: false)
                 ->post(sprintf(self::ENDPOINT, $model), $payload);
         } catch (ConnectionException $e) {
             Log::warning('Gemini: нет соединения', ['error' => $e->getMessage()]);

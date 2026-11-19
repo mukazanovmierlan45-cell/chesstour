@@ -59,7 +59,7 @@ export default function AssistantPage() {
   return (
     <div className="container">
       <div className="page-head">
-        <div><h1 data-type="h">ИИ-ассистент клуба</h1><p data-type="p">Гамбит-бот на Google Gemini: спросите про шахматы, турниры клуба или работу сайта.</p></div>
+        <div><h1 data-type="h">ИИ-ассистент клуба</h1><p data-type="p">Гамбит-бот на Groq: спросите про шахматы, турниры клуба или работу сайта.</p></div>
         {messages.length > 0 && <button className="secondary" onClick={() => { setMessages([]); setError(null); }}>Новый диалог</button>}
       </div>
 
@@ -94,7 +94,7 @@ export default function AssistantPage() {
             placeholder="Напишите вопрос… (Enter — отправить, Shift+Enter — новая строка)" aria-label="Сообщение ассистенту" maxLength={2000} />
           <button type="submit" disabled={busy || !text.trim()}>Отправить</button>
         </form>
-        <p className="hint">Ответы генерирует ИИ и могут содержать ошибки. Не отправляйте личные данные: сообщения передаются в Google Gemini.</p>
+        <p className="hint">Ответы генерирует ИИ и могут содержать ошибки. Не отправляйте личные данные: сообщения передаются в Groq.</p>
       </div>
     </div>
   );
