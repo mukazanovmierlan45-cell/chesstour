@@ -107,6 +107,7 @@ export async function homePage(root) {
           <li><a href="${user ? '#/my' : '#/register'}"><span><b>Игрокам</b><small>Заявки, свои пары и история партий</small></span><i>+</i></a></li>
           <li><a href="${user ? '#/tournaments/new' : '#/login'}"><span><b>Организаторам</b><small>Положение, допуск, жеребьёвка, афиша</small></span><i>+</i></a></li>
           <li><a href="${user ? '#/admin' : '#/login'}"><span><b>Руководителю клуба</b><small>Контроли времени, роли, статистика</small></span><i>+</i></a></li>
+          <li><a href="${user ? '#/training' : '#/register'}"><span><b>Тренировка с роботом</b><small>Партия с ботом и разбор каждого хода</small></span><i>+</i></a></li>
           <li><a href="#/tournaments?status=finished"><span><b>Болельщикам</b><small>Итоговые таблицы завершённых турниров</small></span><i>+</i></a></li>
         </ul>
         <div class="piece-row">${['r', 'n', 'b', 'q', 'p'].map((t) => pieceSVG(t, 'w')).join('')}</div>

@@ -106,7 +106,7 @@ export function mountChess(root) {
       setStatus('Соперник думает…');
       setTimeout(() => {
         if (!alive() || mode !== 'play') return;
-        apply(bestMove(pos, 3));
+        apply(bestMove(pos, 2, 15));
         thinking = false; renderControls();
         afterMove();
       }, 500);

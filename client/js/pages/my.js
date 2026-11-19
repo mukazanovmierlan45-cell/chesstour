@@ -5,7 +5,7 @@ export async function myPage(root) {
   const [{ data: tournaments }, { data: games }] = await Promise.all([api('/my/tournaments'), api('/my/games')]);
 
   root.innerHTML = `
-    <div class="page-head"><div><h1>Мои турниры</h1><p>Заявки, статусы допуска и сыгранные партии</p></div><a class="btn secondary" href="#/tournaments?status=registration">Найти турнир</a></div>
+    <div class="page-head"><div><h1>Мои турниры</h1><p>Заявки, статусы допуска и сыгранные партии</p></div><span class="actions"><a class="btn" href="#/training">Тренировка с роботом</a><a class="btn secondary" href="#/tournaments?status=registration">Найти турнир</a></span></div>
     ${tournaments.length ? `<div class="table-wrap"><table>
       <thead><tr><th>Турнир</th><th>Даты</th><th>Статус турнира</th><th>Моя заявка</th></tr></thead>
       <tbody>${tournaments.map((t) => `<tr>

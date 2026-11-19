@@ -130,45 +130,77 @@ export function notation(pos, m) {
   return `${LETTER[type]}${from}${take}${sqName(m.to)}${m.promo ? 'Ф' : ''}${suffix}`;
 }
 
-// ---- Соперник: перебор на 3 полухода с альфа-бета отсечением ----
-const VALUE = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
-const CENTER = [0, 1, 2, 3, 3, 2, 1, 0];
+// ---- Оценка позиции и перебор ----
+export const VALUE = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
+// Таблицы позиционных бонусов (с точки зрения белых, строка 0 — восьмая горизонталь)
+const PST = {
+  p: [0, 0, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 20, 30, 30, 20, 10, 10, 5, 5, 10, 25, 25, 10, 5, 5,
+    0, 0, 0, 20, 20, 0, 0, 0, 5, -5, -10, 0, 0, -10, -5, 5, 5, 10, 10, -20, -20, 10, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0],
+  n: [-50, -40, -30, -30, -30, -30, -40, -50, -40, -20, 0, 0, 0, 0, -20, -40, -30, 0, 10, 15, 15, 10, 0, -30, -30, 5, 15, 20, 20, 15, 5, -30,
+    -30, 0, 15, 20, 20, 15, 0, -30, -30, 5, 10, 15, 15, 10, 5, -30, -40, -20, 0, 5, 5, 0, -20, -40, -50, -40, -30, -30, -30, -30, -40, -50],
+  b: [-20, -10, -10, -10, -10, -10, -10, -20, -10, 0, 0, 0, 0, 0, 0, -10, -10, 0, 5, 10, 10, 5, 0, -10, -10, 5, 5, 10, 10, 5, 5, -10,
+    -10, 0, 10, 10, 10, 10, 0, -10, -10, 10, 10, 10, 10, 10, 10, -10, -10, 5, 0, 0, 0, 0, 5, -10, -20, -10, -10, -10, -10, -10, -10, -20],
+  r: [0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 10, 10, 10, 10, 10, 5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5,
+    -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, 0, 0, 0, 5, 5, 0, 0, 0],
+  q: [-20, -10, -10, -5, -5, -10, -10, -20, -10, 0, 0, 0, 0, 0, 0, -10, -10, 0, 5, 5, 5, 5, 0, -10, -5, 0, 5, 5, 5, 5, 0, -5,
+    0, 0, 5, 5, 5, 5, 0, -5, -10, 5, 5, 5, 5, 5, 0, -10, -10, 0, 5, 0, 0, 0, 0, -10, -20, -10, -10, -5, -5, -10, -10, -20],
+  k: [-30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30,
+    -20, -30, -30, -40, -40, -30, -30, -20, -10, -20, -20, -20, -20, -20, -20, -10, 20, 20, 0, 0, 0, 0, 20, 20, 20, 30, 10, 0, 0, 10, 30, 20],
+};
 
-function evaluate(pos) {
+/** Оценка в сантипешках с точки зрения стороны, которая ходит. */
+export function evaluate(pos) {
   let score = 0;
   pos.b.forEach((p, i) => {
     if (!p) return;
-    const type = p.toLowerCase(), r = Math.floor(i / 8), f = i % 8;
-    let v = VALUE[type];
-    if (type === 'n' || type === 'b') v += (CENTER[r] + CENTER[f]) * 4;
-    if (type === 'p') v += (colorOf(p) === 'w' ? 6 - r : r - 1) * 6 + (f > 1 && f < 6 ? CENTER[r] * 3 : 0);
-    score += colorOf(p) === 'w' ? v : -v;
+    const type = p.toLowerCase(), white = colorOf(p) === 'w';
+    const v = VALUE[type] + PST[type][white ? i : (7 - Math.floor(i / 8)) * 8 + (i % 8)];
+    score += white ? v : -v;
   });
   return pos.turn === 'w' ? score : -score;
 }
 
-function order(moves) {
-  return moves.sort((a, c) => (c.captured ? VALUE[c.captured.toLowerCase()] * 10 - VALUE[c.piece.toLowerCase()] : 0)
-    - (a.captured ? VALUE[a.captured.toLowerCase()] * 10 - VALUE[a.piece.toLowerCase()] : 0));
-}
+const MATE = 100000;
+const gain = (m) => (m.captured ? VALUE[m.captured.toLowerCase()] * 10 - VALUE[m.piece.toLowerCase()] : 0) + (m.promo ? 8000 : 0);
+const order = (moves) => moves.sort((a, c) => gain(c) - gain(a));
 
-function search(pos, depth, alpha, beta) {
-  const moves = legalMoves(pos);
-  if (!moves.length) return inCheck(pos, pos.turn) ? -100000 - depth : 0;
-  if (depth === 0) return evaluate(pos);
-  for (const m of order(moves)) {
-    const score = -search(makeMove(pos, m), depth - 1, -beta, -alpha);
+// Перебор только взятий, чтобы не обрывать расчёт посреди размена
+function quiesce(pos, alpha, beta, depth = 0) {
+  const stand = evaluate(pos);
+  if (stand >= beta) return beta;
+  if (stand > alpha) alpha = stand;
+  if (depth > 5) return alpha;
+  for (const m of order(legalMoves(pos).filter((x) => x.captured || x.promo))) {
+    const score = -quiesce(makeMove(pos, m), -beta, -alpha, depth + 1);
     if (score >= beta) return beta;
     if (score > alpha) alpha = score;
   }
   return alpha;
 }
 
-export function bestMove(pos, depth = 3) {
-  let best = null, bestScore = -Infinity;
-  for (const m of order(legalMoves(pos))) {
-    const score = -search(makeMove(pos, m), depth - 1, -Infinity, Infinity) + Math.random() * 12; // немного разнообразия
-    if (score > bestScore) { bestScore = score; best = m; }
+function search(pos, depth, alpha, beta, ply = 1) {
+  const moves = legalMoves(pos);
+  if (!moves.length) return inCheck(pos, pos.turn) ? -MATE + ply : 0;
+  if (depth <= 0) return quiesce(pos, alpha, beta);
+  for (const m of order(moves)) {
+    const score = -search(makeMove(pos, m), depth - 1, -beta, -alpha, ply + 1);
+    if (score >= beta) return beta;
+    if (score > alpha) alpha = score;
   }
-  return best;
+  return alpha;
+}
+
+/** Оценка каждого хода позиции (лучшие первыми); score — для стороны, которая ходит. */
+export function analyse(pos, depth = 2) {
+  return order(legalMoves(pos))
+    .map((m) => ({ ...m, score: -search(makeMove(pos, m), depth - 1, -MATE - 1, MATE + 1) }))
+    .sort((a, c) => c.score - a.score);
+}
+
+export const isMateScore = (score) => Math.abs(score) > MATE - 1000;
+
+/** Ход компьютера; noise — сколько сантипешек «шума» добавлять (чем больше, тем слабее игра). */
+export function bestMove(pos, depth = 3, noise = 12) {
+  const scored = analyse(pos, depth).map((m) => ({ ...m, pick: m.score + Math.random() * noise }));
+  return scored.sort((a, c) => c.pick - a.pick)[0] ?? null;
 }

@@ -9,6 +9,7 @@ import { tournamentsPage } from './pages/tournaments.js';
 import { tournamentPage } from './pages/tournament.js';
 import { tournamentFormPage } from './pages/tournament-form.js';
 import { myPage } from './pages/my.js';
+import { trainingPage } from './pages/training.js';
 import { adminPage } from './pages/admin.js';
 
 const app = document.getElementById('app');
@@ -23,6 +24,7 @@ const routes = [
   [/^#\/tournaments\/(\d+)\/edit$/, tournamentFormPage, true, ['organizer', 'admin']],
   [/^#\/tournaments\/(\d+)$/, tournamentPage],
   [/^#\/my$/, myPage, true],
+  [/^#\/training$/, trainingPage, true],
   [/^#\/admin$/, adminPage, true, ['admin']],
 ];
 
@@ -46,7 +48,7 @@ function renderNav(hash) {
   const links = [link('#/tournaments', 'Турниры')];
 
   if (user) {
-    links.push(link('#/my', 'Мои турниры'));
+    links.push(link('#/my', 'Мои турниры'), link('#/training', 'Тренировка'));
     if (hasRole('organizer', 'admin')) links.push(link('#/tournaments/new', 'Новый турнир'));
     if (hasRole('admin')) links.push(link('#/admin', 'Администрирование'));
     links.push(`<span class="who"><span>${esc(user.name)}<small>${esc(user.role_label)}</small></span>${avatar(user.name)}</span>`);
