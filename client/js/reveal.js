@@ -1,67 +1,108 @@
-// Плавное появление блоков при прокрутке: заголовки выезжают по словам, карточки — по очереди.
+// Появление при прокрутке: текст «печатается» буква за буквой с мигающим курсором,
+// карточки и прочие блоки мягко всплывают.
 const BLOCKS = [
-  '.section-head > div', '.section-head > a', '.stage-lead', '.b3d-scene', '.stage-caption',
-  '.step-card', '.t-card', '.club > .card', '.players-center > a', '.chip-float',
-  '.role-rows li', '.split-light > p', '.split-light > .actions', '.piece-row',
-  '.page-head p', '.t-hero', '.t-facts', '.podium', '.table-wrap', '.card', '.tabs',
-  '.footer-inner > div',
+  '.b3d-scene', '.stage-caption .actions', '.step-card', '.t-card', '.club > .card', '.players-center > a', '.chip-float',
+  '.role-rows li', '.split-light > .actions', '.piece-row', '.t-facts', '.podium', '.table-wrap',
+  '.card:not(.t-card)', '.tabs', '.section-head > a', '.footer-inner > div',
 ].join(',');
-const WORDS = '.display-2, .page-head h1, .t-hero h1, .section-head h2, main h2';
+// Заголовки — печать с курсором; описания — быстрее, сразу после заголовка своего раздела
+const HEADINGS = '.hero .display, .display-2, .page-head h1, .t-hero h1, main h2';
+const LEADS = '.hero-sub, .section-head p, .stage-lead, .page-head p, .t-hero p, .split-light > p, .auth-side p';
+const PARAS = '.step-card h3, .step-card p, .role-rows small';
 
-function splitWords(el) {
-  let n = 0;
+const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Оборачивает каждую букву в span, сохраняя вложенные теги (b, a, nbsp). */
+function splitChars(el) {
+  const chars = [];
   const walk = (node) => {
     [...node.childNodes].forEach((child) => {
       if (child.nodeType === Node.TEXT_NODE) {
         const frag = document.createDocumentFragment();
-        child.textContent.split(/( +)/).forEach((part) => {
-          if (!part) return;
-          if (/^ +$/.test(part)) { frag.append(part); return; }
-          const outer = document.createElement('span');
-          outer.className = 'w';
-          const inner = document.createElement('span');
-          inner.className = 'wi';
-          inner.style.setProperty('--wi', n++);
-          inner.textContent = part;
-          outer.append(inner);
-          frag.append(outer);
-        });
+        for (const ch of child.textContent) {
+          if (ch === '\n' || (ch === ' ' && false)) { frag.append(ch); continue; }
+          const span = document.createElement('span');
+          span.className = 'ch';
+          span.textContent = ch;
+          frag.append(span);
+          chars.push(span);
+        }
         child.replaceWith(frag);
-      } else if (child.nodeType === Node.ELEMENT_NODE && child.tagName !== 'BR') {
+      } else if (child.nodeType === Node.ELEMENT_NODE && !['BR', 'svg'].includes(child.tagName)) {
         walk(child);
       }
     });
   };
   walk(el);
+  return chars;
+}
+
+const sectionOf = (el) => el.closest('section, .page-head, .t-hero, .auth-side, .split > div, footer, main') ?? document.body;
+const chains = new WeakMap();
+
+function type(el) {
+  const chars = el._chars;
+  if (!chars?.length) return Promise.resolve();
+  const heading = el.matches(HEADINGS);
+  const step = heading ? 42 : Math.max(6, Math.min(18, 900 / chars.length)); // описания успевают за ~1 секунду
+  const caret = document.createElement('span');
+  caret.className = `caret ${heading ? '' : 'thin'}`;
+  caret.setAttribute('aria-hidden', 'true');
+  chars[0].before(caret);
+  el.classList.add('typing');
+  return new Promise((resolve) => {
+    let i = 0;
+    const tick = () => {
+      // несколько букв за кадр, если шаг меньше длительности кадра
+      const batch = Math.max(1, Math.round(16 / step));
+      for (let k = 0; k < batch && i < chars.length; k++, i++) chars[i].classList.add('on');
+      chars[Math.min(i, chars.length) - 1].after(caret);
+      if (i < chars.length) { setTimeout(tick, step * batch); return; }
+      el.classList.remove('typing');
+      el.classList.add('typed');
+      setTimeout(() => caret.remove(), heading ? 900 : 200);
+      resolve();
+    };
+    tick();
+  });
+}
+
+function startTyping(el) {
+  const chained = el.matches(HEADINGS) || el.matches(LEADS);
+  if (!chained) { type(el); return; }
+  // в одном разделе заголовок и описание печатаются по очереди
+  const section = sectionOf(el);
+  const prev = chains.get(section) ?? Promise.resolve();
+  const next = prev.then(() => type(el));
+  chains.set(section, next);
 }
 
 export function initReveal(root = document.body) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+  if (reduced() || !('IntersectionObserver' in window)) return;
 
-  const show = (el) => {
-    el.classList.add('in');
-    const delay = parseFloat(el.style.getPropertyValue('--rd')) || 0;
-    // после появления убираем служебные классы, чтобы не мешать hover-эффектам
-    if (el.classList.contains('reveal')) setTimeout(() => { el.classList.remove('reveal', 'in'); el.style.removeProperty('--rd'); }, 1000 + delay);
-  };
   const io = new IntersectionObserver((entries) => entries.forEach((e) => {
     if (!e.isIntersecting) return;
-    show(e.target);
     io.unobserve(e.target);
+    const el = e.target;
+    if (el.dataset.rv === 'type') { startTyping(el); return; }
+    el.classList.add('in');
+    const delay = parseFloat(el.style.getPropertyValue('--rd')) || 0;
+    setTimeout(() => { el.classList.remove('reveal', 'in'); el.style.removeProperty('--rd'); }, 1000 + delay);
   }), { rootMargin: '0px 0px -5% 0px', threshold: 0.01 });
 
-  const skip = (el) => el.closest('.hero, .topbar, .flash, .train, .fp') || el.dataset.rv;
+  const skipBlock = (el) => el.closest('.hero, .topbar, .flash, .train, .fp') || el.dataset.rv;
+  const skipText = (el) => el.closest('.topbar, .flash, .train, .fp, .coach') || el.dataset.rv;
 
   const tag = () => {
-    root.querySelectorAll(WORDS).forEach((el) => {
-      if (skip(el)) return;
-      el.dataset.rv = 'words';
-      splitWords(el);
-      el.classList.add('reveal-words');
+    root.querySelectorAll(`${HEADINGS}, ${LEADS}, ${PARAS}`).forEach((el) => {
+      if (skipText(el) || !el.textContent.trim()) return;
+      el.dataset.rv = 'type';
+      el._chars = splitChars(el);
+      el.classList.add('typewriter');
       io.observe(el);
     });
     root.querySelectorAll(BLOCKS).forEach((el) => {
-      if (skip(el) || el.parentElement.closest('.reveal')) return;
+      if (skipBlock(el) || el.parentElement.closest('.reveal')) return;
       el.dataset.rv = 'block';
       const siblings = [...el.parentElement.children];
       el.style.setProperty('--rd', `${(siblings.indexOf(el) % 6) * 90}ms`);

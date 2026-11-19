@@ -183,7 +183,7 @@ input.invalid, select.invalid, textarea.invalid { border-color: var(--danger); b
 
 /* ---------- Главный экран ---------- */
 .display { font: 500 clamp(44px, 7.6vw, 112px)/.98 var(--display); letter-spacing: -0.035em; margin: 0; }
-.display span { display: block; }
+.display > span:not(.ch):not(.caret) { display: block; }
 .display-2 { font: 500 clamp(26px, 3.4vw, 46px)/1.08 var(--display); letter-spacing: -0.03em; margin: 0 0 10px; }
 .hero {
   position: relative; overflow: hidden; min-height: calc(100vh - 62px);
@@ -490,9 +490,14 @@ main:not(.container):not(:has(.auth)):not(:has(.split)) { padding-bottom: 96px; 
 /* ---------- Появление при прокрутке ---------- */
 .reveal { opacity: 0; transform: translateY(34px); }
 .reveal.in { opacity: 1; transform: none; transition: opacity .9s var(--ease) var(--rd, 0s), transform .9s var(--ease) var(--rd, 0s); }
-.reveal-words .w { display: inline-block; overflow: hidden; vertical-align: bottom; padding: 0 .02em .14em; margin-bottom: -.14em; }
-.reveal-words .wi { display: inline-block; transform: translateY(110%); }
-.reveal-words.in .wi { transform: none; transition: transform .95s var(--ease) calc(var(--wi) * 70ms); }
+/* Печатная машинка: место под текст занято сразу, буквы проявляются по одной */
+.typewriter .ch { opacity: 0; transition: opacity .18s ease-out; }
+.typewriter .ch.on { opacity: 1; }
+.caret { display: inline-block; width: .08em; min-width: 2px; height: .95em; margin: 0 .03em -.08em; background: currentColor; vertical-align: baseline; animation: caret .9s steps(1) infinite; }
+.caret.thin { width: 2px; height: 1em; opacity: .7; }
+.typing .caret { animation: none; }
+@keyframes caret { 50% { opacity: 0; } }
+.hero-center > .display, .hero-center > .hero-sub { animation: none; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
