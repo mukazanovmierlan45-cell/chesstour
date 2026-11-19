@@ -1,20 +1,22 @@
 // Доска в перспективе: фигуры стоят вертикально и сами разыгрывают партию.
 import { pieceSVG } from './pieces.js';
 
-const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+import { colorOf, sqName } from './chess.js';
 
-// Итальянская партия, Джуоко пиано: 1.e4 e5 2.Кf3 Кc6 3.Сc4 Сc5 4.c3 Кf6 5.d4 ed 6.cd Сb4+ 7.Сd2 С:d2+ 8.Кb:d2 d5
+// Итальянская партия для демонстрации: 1.e4 e5 2.Кf3 Кc6 3.Сc4 Сc5 4.c3 Кf6 5.d4 ed 6.cd Сb4+ 7.Сd2 С:d2+ 8.Кb:d2 d5
 export const GAME = [
-  ['e2', 'e4', 'e4'], ['e7', 'e5', 'e5'], ['g1', 'f3', 'Кf3'], ['b8', 'c6', 'Кc6'],
-  ['f1', 'c4', 'Сc4'], ['f8', 'c5', 'Сc5'], ['c2', 'c3', 'c3'], ['g8', 'f6', 'Кf6'],
-  ['d2', 'd4', 'd4'], ['e5', 'd4', 'e:d4'], ['c3', 'd4', 'c:d4'], ['c5', 'b4', 'Сb4+'],
-  ['c1', 'd2', 'Сd2'], ['b4', 'd2', 'С:d2+'], ['b1', 'd2', 'К:d2'], ['d7', 'd5', 'd5'],
+  ['e2', 'e4'], ['e7', 'e5'], ['g1', 'f3'], ['b8', 'c6'], ['f1', 'c4'], ['f8', 'c5'], ['c2', 'c3'], ['g8', 'f6'],
+  ['d2', 'd4'], ['e5', 'd4'], ['c3', 'd4'], ['c5', 'b4'], ['c1', 'd2'], ['b4', 'd2'], ['b1', 'd2'], ['d7', 'd5'],
 ];
 
 const FILES = 'abcdefgh';
-const at = (sq) => [FILES.indexOf(sq[0]), 8 - Number(sq[1])]; // [столбец, строка сверху]
+const place = (node, i) => {
+  node.dataset.i = i;
+  node.style.transform = `translate(${(i % 8) * 100}%, ${Math.floor(i / 8) * 100}%)`;
+};
 
-export function renderBoard3d(el, { onMove = () => {}, interval = 1500 } = {}) {
+/** Доска в перспективе. Позиция задаётся массивом из 64 клеток (a8 = 0 … h1 = 63). */
+export function createBoard3d(el) {
   el.innerHTML = `
     <div class="b3d">
       <div class="b3d-frame">
@@ -24,73 +26,84 @@ export function renderBoard3d(el, { onMove = () => {}, interval = 1500 } = {}) {
       </div>
     </div>`;
   const grid = el.querySelector('.b3d-grid');
-  for (let r = 0; r < 8; r++) {
-    for (let f = 0; f < 8; f++) {
-      grid.insertAdjacentHTML('beforeend', `<div class="b3d-sq ${(r + f) % 2 ? 'dark' : ''}" data-sq="${FILES[f]}${8 - r}"></div>`);
-    }
+  const squares = [];
+  for (let i = 0; i < 64; i++) {
+    const sq = document.createElement('div');
+    sq.className = `b3d-sq ${(Math.floor(i / 8) + (i % 8)) % 2 ? 'dark' : ''}`;
+    sq.dataset.i = i;
+    sq.setAttribute('aria-label', sqName(i));
+    grid.append(sq);
+    squares.push(sq);
   }
+  let nodes = new Array(64).fill(null);
 
-  let board = {};
-  const put = (sq, code) => {
-    const [f, r] = at(sq);
-    const color = code === code.toUpperCase() ? 'w' : 'b';
+  const create = (code, i) => {
+    const color = colorOf(code);
     const node = document.createElement('div');
     node.className = `b3d-piece ${color}`;
-    node.style.transform = `translate(${f * 100}%, ${r * 100}%)`;
-    node.style.zIndex = String(r + 1);
     node.innerHTML = `<div class="stand">${pieceSVG(code.toLowerCase(), color)}</div>`;
+    place(node, i);
     grid.append(node);
-    board[sq] = node;
+    return node;
   };
-  const setup = () => {
-    grid.querySelectorAll('.b3d-piece').forEach((n) => n.remove());
-    grid.querySelectorAll('.hl').forEach((n) => n.classList.remove('hl'));
-    board = {};
-    START.split('/').forEach((row, r) => {
-      let f = 0;
-      for (const ch of row) {
-        if (/\d/.test(ch)) { f += Number(ch); continue; }
-        put(`${FILES[f]}${8 - r}`, ch);
-        f++;
-      }
-    });
+  const remove = (node) => {
+    node.classList.add('captured');
+    setTimeout(() => node.remove(), 600);
   };
-  setup();
-
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
-
-  let i = 0;
-  const step = () => {
-    if (!el.isConnected) return clearInterval(timer);
-    if (i >= GAME.length) {
-      i = 0;
-      el.classList.add('resetting');
-      setTimeout(() => { setup(); onMove(-1); el.classList.remove('resetting'); }, 600);
-      return;
-    }
-    const [from, to] = GAME[i];
-    const node = board[from];
-    const captured = board[to];
-    if (captured) {
-      captured.classList.add('captured');
-      setTimeout(() => captured.remove(), 700);
-    }
-    delete board[from];
-    board[to] = node;
-    const [f, r] = at(to);
-    node.style.zIndex = String(r + 1);
-    node.style.transform = `translate(${f * 100}%, ${r * 100}%)`;
+  const slide = (from, to) => {
+    const node = nodes[from];
+    nodes[from] = null;
+    nodes[to] = node;
+    place(node, to);
     node.classList.remove('hop');
     void node.offsetWidth; // перезапуск анимации прыжка
     node.classList.add('hop');
-    grid.querySelectorAll('.hl').forEach((n) => n.classList.remove('hl'));
-    grid.querySelector(`[data-sq="${from}"]`).classList.add('hl');
-    grid.querySelector(`[data-sq="${to}"]`).classList.add('hl');
-    onMove(i);
-    i++;
   };
-  const timer = setInterval(step, interval);
-  return () => clearInterval(timer);
+
+  return {
+    el,
+    setPosition(board) {
+      grid.querySelectorAll('.b3d-piece').forEach((n) => n.remove());
+      nodes = board.map((code, i) => (code ? create(code, i) : null));
+    },
+    /** Анимация хода; move — объект из chess.js (from, to, enPassant, castle, promo). */
+    playMove(m) {
+      const captureAt = m.enPassant ? m.to + (colorOf(m.piece) === 'w' ? 8 : -8) : m.to;
+      if (nodes[captureAt]) { remove(nodes[captureAt]); nodes[captureAt] = null; }
+      slide(m.from, m.to);
+      if (m.castle) {
+        const [rf, rt] = m.castle === 'K' ? [m.from + 3, m.from + 1] : [m.from - 4, m.from - 1];
+        setTimeout(() => slide(rf, rt), 180);
+      }
+      if (m.promo) {
+        const color = colorOf(m.piece);
+        setTimeout(() => { nodes[m.to].querySelector('.stand').innerHTML = pieceSVG('q', color); }, 500);
+      }
+    },
+    /** Подсветка: last — последний ход, selected — выбранная клетка, targets — куда можно пойти, check — король под шахом. */
+    mark({ last = [], selected = -1, targets = [], captures = [], check = -1 } = {}) {
+      squares.forEach((sq, i) => {
+        sq.classList.toggle('hl', last.includes(i));
+        sq.classList.toggle('sel', i === selected);
+        sq.classList.toggle('target', targets.includes(i) && !captures.includes(i));
+        sq.classList.toggle('capture', captures.includes(i));
+        sq.classList.toggle('check', i === check);
+      });
+    },
+    /** handler получает все клетки под курсором — от ближней к дальней: фигуры в 3D закрывают друг друга. */
+    onSquare(handler) {
+      grid.addEventListener('click', (event) => {
+        const stack = document.elementsFromPoint(event.clientX, event.clientY)
+          .map((e) => e.closest?.('[data-i]'))
+          .filter((e) => e && grid.contains(e))
+          .map((e) => Number(e.dataset.i));
+        const hit = event.target.closest('[data-i]');
+        if (!stack.length && hit) stack.push(Number(hit.dataset.i));
+        if (stack.length) handler([...new Set(stack)]);
+      });
+    },
+    fade(out) { el.classList.toggle('resetting', out); },
+  };
 }
 
 /** Парящая фигура для декоративных композиций. */

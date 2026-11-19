@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { getUser } from '../auth.js';
-import { GAME, floating, parallax, renderBoard3d } from '../board3d.js';
+import { floating, parallax } from '../board3d.js';
+import { mountChess } from '../play.js';
 import { pieceSVG } from '../pieces.js';
 import { avatar, esc, plural, shortDate } from '../ui.js';
 import { tournamentCard } from './tournaments.js';
@@ -46,15 +47,12 @@ export async function homePage(root) {
 
     <section class="stage">
       <h2 class="display-2">Шестьдесят четыре клетки и&nbsp;одна честная таблица</h2>
-      <div class="b3d-scene" id="stage-board" role="img" aria-label="Доска в перспективе: фигуры разыгрывают Итальянскую партию"></div>
+      <p class="stage-lead">Нажмите на доску — и сыграйте партию с компьютером прямо здесь</p>
+      <div class="b3d-scene" id="stage-board" role="application" aria-label="Шахматная доска: можно сыграть партию белыми против компьютера"></div>
       <div class="stage-caption">
-        <span>Итальянская партия, разыгрывается прямо сейчас</span>
-        <ol class="moves" id="moves">
-          ${GAME.reduce((html, [, , san], i) => html
-            + (i % 2 === 0 ? `<li><span class="mn">${i / 2 + 1}.</span>` : '')
-            + `<span class="mv" data-i="${i}">${san}</span>`
-            + (i % 2 === 1 ? '</li>' : ''), '')}
-        </ol>
+        <p class="play-status" id="play-status" aria-live="polite"></p>
+        <div class="actions center" id="play-controls"></div>
+        <ol class="moves" id="moves"></ol>
       </div>
     </section>
 
@@ -126,13 +124,7 @@ export async function homePage(root) {
     </section>`;
 
   parallax(root.querySelector('#hero'));
-  const moves = root.querySelectorAll('#moves .mv');
-  renderBoard3d(root.querySelector('#stage-board'), {
-    onMove: (i) => moves.forEach((m, k) => {
-      m.classList.toggle('played', k <= i);
-      m.classList.toggle('current', k === i);
-    }),
-  });
+  mountChess(root);
 
   const [open, live, finished] = await Promise.all([
     safe(api('/tournaments', { query: { status: 'registration', sort: 'start_date', order: 'asc', per_page: 3 } })),

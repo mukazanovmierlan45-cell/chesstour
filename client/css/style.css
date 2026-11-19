@@ -209,7 +209,9 @@ input.invalid, select.invalid, textarea.invalid { border-color: var(--danger); b
 .stage { position: relative; overflow: hidden; padding: 110px 20px 40px; text-align: center; background: linear-gradient(var(--paper) 0 50%, var(--night) 50% 100%); }
 .stage .display-2 { max-width: 16em; margin: 0 auto; }
 .b3d-scene { perspective: 1900px; perspective-origin: 50% 20%; width: min(880px, 96vw); margin: clamp(-110px, -8vw, -30px) auto 0; }
-.b3d { transform: rotateX(46deg); transform-style: preserve-3d; transform-origin: 50% 70%; }
+.b3d-scene { --tilt: 46deg; }
+.stage.playing .b3d-scene { --tilt: 34deg; }
+.b3d { transform: rotateX(var(--tilt)); transform-style: preserve-3d; transform-origin: 50% 70%; transition: transform .8s var(--ease); }
 .b3d-frame {
   position: relative; padding: 5.4%; border-radius: 16px; transform-style: preserve-3d;
   background: linear-gradient(120deg, #d9a56f, #b67a47 38%, #a46a3c 62%, #c58b56);
@@ -228,12 +230,28 @@ input.invalid, select.invalid, textarea.invalid { border-color: var(--danger); b
 .b3d-sq.dark { background: #191919; }
 .b3d-sq.hl { box-shadow: inset 0 0 0 999px rgba(198, 40, 40, .5); }
 .b3d-piece { position: absolute; left: 0; top: 0; width: 12.5%; height: 12.5%; transform-style: preserve-3d; transition: transform .75s cubic-bezier(.5, 0, .2, 1), opacity .5s; }
-.b3d-piece .stand { position: absolute; left: 7%; width: 86%; bottom: 26%; height: 172%; transform-origin: 50% 100%; transform: rotateX(-46deg); transition: opacity .5s, transform .5s; }
+.b3d-piece .stand { position: absolute; left: 7%; width: 86%; bottom: 26%; height: 172%; transform-origin: 50% 100%; transform: rotateX(calc(-1 * var(--tilt))); transition: opacity .5s, transform .8s var(--ease); }
 .b3d-piece .stand svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 4px rgba(0, 0, 0, .35)); }
 .b3d-piece.hop .stand { animation: hop .75s cubic-bezier(.4, 0, .3, 1); }
-@keyframes hop { 0%, 100% { transform: rotateX(-46deg); } 45% { transform: rotateX(-46deg) translateY(-30%); } }
-.b3d-piece.captured .stand { opacity: 0; transform: rotateX(-46deg) scale(.5); }
+@keyframes hop { 0%, 100% { transform: rotateX(calc(-1 * var(--tilt))); } 45% { transform: rotateX(calc(-1 * var(--tilt))) translateY(-30%); } }
+.b3d-piece.captured .stand { opacity: 0; transform: rotateX(calc(-1 * var(--tilt))) scale(.5); }
 .resetting .b3d-piece { opacity: 0; }
+/* Игра на доске */
+.b3d-piece { pointer-events: none; }
+.b3d-piece svg * { pointer-events: visiblePainted; cursor: pointer; }
+.b3d-sq { position: relative; cursor: pointer; }
+.b3d-sq.sel { box-shadow: inset 0 0 0 999px rgba(198, 40, 40, .55); }
+.b3d-sq.target::after { content: ""; position: absolute; inset: 36%; border-radius: 50%; background: rgba(198, 40, 40, .75); box-shadow: 0 0 0 4px rgba(198, 40, 40, .2); }
+.b3d-sq.capture { box-shadow: inset 0 0 0 5px rgba(198, 40, 40, .9); }
+.b3d-sq.check { box-shadow: inset 0 0 0 999px rgba(198, 40, 40, .35), inset 0 0 22px 6px rgba(255, 60, 40, .9); }
+.stage-lead { color: var(--muted); margin: 10px auto 0; font-size: 15px; }
+.play-status { margin: 0; color: #e8e8e4; font-size: 16px; font-weight: 600; min-height: 26px; max-width: 40em; }
+.play-status.win { color: #6be3a8; }
+.play-status.lose { color: #ff7a6e; }
+.stage .moves { max-height: 112px; overflow-y: auto; }
+.pill.light { background: linear-gradient(180deg, #ffffff, #dcdcd8); color: var(--ink); border-color: #fff; box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15), 0 14px 30px rgba(0, 0, 0, .4); }
+.btn.light { background: #fff; color: var(--ink); border-color: #fff; }
+.btn.light:hover { background: #e6e6e2; }
 .stage-caption { margin: 34px auto 0; color: var(--muted-dark); font-size: 14px; display: grid; gap: 12px; justify-items: center; }
 .moves { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; max-width: 760px; }
 .moves li { display: flex; gap: 6px; }
