@@ -46,19 +46,21 @@ php artisan serve                # http://127.0.0.1:8000
 Проверка: http://127.0.0.1:8000/api/health должен вернуть `"database": "ok"`.
 Список маршрутов: `php artisan route:list --path=api`.
 
-## ИИ-ассистент (Google Gemini)
+## ИИ-ассистент (Groq)
 
 `POST /api/v1/ai/chat` — чат с «Гамбит-ботом»: шахматные вопросы, турниры клуба, помощь по сайту.
 В клиенте — страница «ИИ-ассистент» (`/#/assistant`, нужен вход).
 
 - Клиент передаёт историю диалога (`messages[]`: `role` user/assistant, `content` до 2000 символов, не более 20 сообщений).
 - Сервер (`app/Services/AiChatService.php`) добавляет системную инструкцию с актуальными турнирами клуба из БД
-  и вызывает Gemini `generateContent`; ответ — `{"data": {"role": "assistant", "content": "..."}}`.
+  и вызывает Groq (OpenAI-совместимый `chat/completions`); ответ — `{"data": {"role": "assistant", "content": "..."}}`.
+- При перегрузке сервиса (429/503) запрос автоматически повторяется.
 - Коды: 401 — нет токена, 422 — ошибки валидации, 429 — больше 10 сообщений в минуту, 503 — ИИ недоступен или не настроен.
-- Настройка: получите ключ на https://aistudio.google.com/apikey и впишите в `backend/.env`:
-  `GEMINI_API_KEY=...` (модель — `GEMINI_MODEL`, по умолчанию `gemini-2.5-flash`), затем `php artisan config:clear`.
+- Настройка: получите ключ на https://console.groq.com/keys и впишите в `backend/.env`:
+  `AI_PROVIDER=groq`, `GROQ_API_KEY=...` (модель — `GROQ_MODEL`, например `openai/gpt-oss-120b`), затем `php artisan config:clear`.
   Ключ не коммитится и не попадает в клиент.
-- В тестах (`tests/Feature/AiChatApiTest.php`) Gemini подменяется `Http::fake()` — ключ и интернет не нужны.
+- Запасной провайдер — Google Gemini: `AI_PROVIDER=gemini`, `GEMINI_API_KEY`, `GEMINI_MODEL`.
+- В тестах (`tests/Feature/AiChatApiTest.php`) внешние API подменяются `Http::fake()` — ключи и интернет не нужны.
 
 ### Тестовые учётные записи
 
