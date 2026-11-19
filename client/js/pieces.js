@@ -1,74 +1,63 @@
-// Объёмные фигуры в SVG: силуэт строится из полупрофиля (как на токарном станке),
-// цилиндрическую светотень даёт горизонтальный градиент, шары — радиальный.
-// Градиенты #pw/#pb/#sw/#sb объявлены один раз в index.html.
+// Классические шахматные фигуры (рисунок Colin M.L. Burnett, набор «cburnett»,
+// лицензии GPLv2+ / BSD / GFDL — тот же набор используется на Lichess и в Википедии).
+// Добавлен мягкий градиент заливки; рисунок 45×45.
 
-const BASE = [[30, 168], [33, 174], [33, 180], [38, 184], [38, 193]];
-
-const SHAPES = {
-  p: { half: [[10, 86], [9, 92], [20, 96], [22, 100], [12, 104], [13, 130], [18, 154], [26, 164]], spheres: [[50, 70, 18]] },
-  b: {
-    half: [[4, 24], [12, 32], [19, 46], [21, 60], [17, 74], [10, 82], [20, 86], [22, 90], [11, 94], [12, 128], [17, 152], [26, 164]],
-    spheres: [[50, 17, 7]], slit: 'M57 40 L45 57',
-  },
-  r: { half: [[6, 40], [6, 28], [16, 28], [16, 40], [20, 40], [20, 28], [31, 28], [31, 54], [22, 62], [19, 138], [22, 154], [28, 164]] },
-  q: {
-    half: [[6, 30], [12, 46], [18, 30], [22, 50], [31, 34], [27, 64], [20, 76], [27, 82], [27, 88], [14, 92], [14, 128], [19, 152], [27, 164]],
-    spheres: [[50, 20, 7], [32, 28, 3.5], [68, 28, 3.5], [19, 33, 3.5], [81, 33, 3.5]],
-  },
-  k: {
-    half: [[8, 44], [20, 44], [28, 50], [26, 64], [19, 78], [27, 84], [27, 90], [14, 94], [15, 128], [20, 152], [27, 164]],
-    cross: true,
-  },
-  n: {
-    path: 'M30 170 C30 150 34 132 42 118 C36 116 26 112 20 106 C14 100 12 92 16 86 C20 80 30 74 40 72 C40 64 42 56 48 50 L46 34 L57 45 C71 48 83 58 87 77 C93 101 87 132 81 150 C79 158 77 164 76 170 Z',
-    eye: [44, 66],
-  },
-};
-
-const half = (pts) => {
-  const left = pts.map(([w, y]) => `${50 - w} ${y}`);
-  const right = pts.slice().reverse().map(([w, y]) => `${50 + w} ${y}`);
-  return `M${left.join(' L')} L${right.join(' L')} Z`;
+// Части фигуры: b — силуэт (заливка + контур), l — линии деталей, d — точки (глаз коня), h — блик у чёрного коня
+const SET = {
+  p: [['b', 'M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z']],
+  n: [
+    ['b', 'M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21'],
+    ['b', 'M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.04-.94 1.41-3.04 0-3-1 0 .19 1.23-1 2-1 0-4 1-4-4 0-2 6-12 6-12s1.89-1.9 2-3.5c-.73-.99-.5-2-.5-3 1-1 3 2.5 3 2.5h2s.78-1.99 2.5-3c1 0 1 3 1 3'],
+    ['d', 'M9.5 25.5a.5.5 0 1 1-1 0 .5.5 0 1 1 1 0z'],
+    ['d', 'M14.93 15.75a.5 1.5 30 1 1-.87-.5.5 1.5 30 1 1 .87.5z'],
+    ['h', 'M24.55 10.4l-.45 1.45.5.15c3.15 1 5.65 2.49 7.9 6.75S35.75 29.06 35.25 39l-.05.5h2.25l.05-.5c.5-10.06-.88-16.85-3.25-21.34-2.37-4.49-5.79-6.64-9.19-7.16l-.51-.1z'],
+  ],
+  b: [
+    ['b', 'M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.35.49-2.32.47-3-.5 1.35-1.94 3-2 3-2z'],
+    ['b', 'M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z'],
+    ['b', 'M25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z'],
+    ['l', 'M17.5 26h10M15 30h15M22.5 15.5v5M20 18h5'],
+  ],
+  r: [
+    ['b', 'M9 39h27v-3H9v3zM12.5 32l1.5-2.5h17l1.5 2.5h-20zM12 36v-4h21v4H12z'],
+    ['b', 'M14 29.5v-13h17v13H14z'],
+    ['b', 'M14 16.5L11 14h23l-3 2.5H14zM11 14V9h4v2h5V9h5v2h5V9h4v5H11z'],
+    ['l', 'M12 35.5h21M13 31.5h19M14 29.5h17M14 16.5h17M11 14h23'],
+  ],
+  q: [
+    ['b', 'M8 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM24.5 7.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM41 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM16 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0zM33 9a2 2 0 1 1-4 0 2 2 0 1 1 4 0z'],
+    ['b', 'M9 26c8.5-1.5 21-1.5 27 0l2-12-7 11V11l-5.5 13.5-3-15-3 15-5.5-14V25L7 14l2 12z'],
+    ['b', 'M9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1-2 2.5-2 2.5-4-8.5-1.5-18.5-1.5-27 0z'],
+    ['l', 'M11.5 30c3.5-1 18.5-1 22 0M12 33.5c6-1 15-1 21 0'],
+  ],
+  k: [
+    ['x', 'M22.5 11.63V6M20 8h5'],
+    ['b', 'M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5'],
+    ['b', 'M12.5 37c5.5 3.5 14.5 3.5 20 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-2.5-7.5-12-10.5-16-4-3 6 6 10.5 6 10.5v7'],
+    ['l', 'M12.5 30c5.5-3 14.5-3 20 0M12.5 33.5c5.5-3 14.5-3 20 0M12.5 37c5.5-3 14.5-3 20 0'],
+  ],
 };
 
 /** SVG-строка фигуры: type — p n b r q k, color — 'w' | 'b'. */
 export function pieceSVG(type, color, extra = '') {
-  const s = SHAPES[type];
-  const fill = color === 'w' ? 'url(#pw)' : 'url(#pb)';
-  const sphere = color === 'w' ? 'url(#sw)' : 'url(#sb)';
-  const line = color === 'w' ? '#9b9b98' : '#4a4a4a';
-  let body = '';
-
-  if (s.path) {
-    body += `<path d="${s.path}" fill="${fill}" stroke="${line}" stroke-width=".8"/>`;
-    body += `<path d="M50 52 C62 56 74 70 76 92" fill="none" stroke="${color === 'w' ? '#fff' : '#6b6b6b'}" stroke-width="3" stroke-linecap="round" opacity=".7"/>`;
-    body += `<ellipse cx="${s.eye[0]}" cy="${s.eye[1]}" rx="3" ry="2.2" fill="${color === 'w' ? '#3a3a3a' : '#9a9a9a'}"/>`;
-    body += `<circle cx="21" cy="93" r="1.8" fill="${color === 'w' ? '#6d6d6b' : '#777'}"/>`;
-    body += `<path d="${half(BASE)}" fill="${fill}" stroke="${line}" stroke-width=".8"/>`;
-  } else {
-    body += `<path d="${half([...s.half, ...BASE])}" fill="${fill}" stroke="${line}" stroke-width=".8" stroke-linejoin="round"/>`;
-  }
-  if (s.cross) {
-    body += `<rect x="46" y="6" width="8" height="38" rx="2" fill="${fill}" stroke="${line}" stroke-width=".8"/>`;
-    body += `<rect x="38" y="16" width="24" height="8" rx="2" fill="${fill}" stroke="${line}" stroke-width=".8"/>`;
-  }
-  (s.spheres || []).filter(([, , r]) => r > 0).forEach(([cx, cy, r]) => {
-    body += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${sphere}"/>`;
-  });
-  if (s.slit) body += `<path d="${s.slit}" stroke="${color === 'w' ? '#8d8d8a' : '#000'}" stroke-width="2.4" stroke-linecap="round"/>`;
-  // красное сукно на подошве
-  body += '<rect x="13" y="191" width="74" height="6" rx="3" fill="#c62828"/>';
-
-  return `<svg class="piece-svg" viewBox="0 0 100 200" preserveAspectRatio="xMidYMax meet" aria-hidden="true" ${extra}>${body}</svg>`;
+  const white = color === 'w';
+  const fill = white ? 'url(#cw)' : 'url(#cb)';
+  const detail = white ? '#000' : '#ececec';
+  const body = SET[type].map(([role, d]) => {
+    if (role === 'b') return `<path d="${d}" fill="${fill}"/>`;
+    if (role === 'l') return `<path d="${d}" fill="none" stroke="${detail}"/>`;
+    if (role === 'x') return `<path d="${d}" fill="none" stroke-linejoin="miter"/>`;
+    if (role === 'd') return `<path d="${d}" fill="${detail}" stroke="${detail}"/>`;
+    return white ? '' : `<path d="${d}" fill="#ececec" stroke="none"/>`; // блик на гриве чёрного коня
+  }).join('');
+  return `<svg class="piece-svg" viewBox="0 0 45 45" aria-hidden="true" ${extra}><g fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${body}</g></svg>`;
 }
 
-/** Определения градиентов — вставляются в страницу один раз. */
+/** Градиенты заливки — вставляются в страницу один раз. */
 export const PIECE_DEFS = `
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
-    <linearGradient id="pw" x1="0" x2="1"><stop offset="0" stop-color="#a9a9a6"/><stop offset=".22" stop-color="#f3f3f1"/><stop offset=".36" stop-color="#ffffff"/><stop offset=".7" stop-color="#dcdcd9"/><stop offset="1" stop-color="#8f8f8c"/></linearGradient>
-    <linearGradient id="pb" x1="0" x2="1"><stop offset="0" stop-color="#050505"/><stop offset=".24" stop-color="#3b3b3b"/><stop offset=".36" stop-color="#5e5e5e"/><stop offset=".62" stop-color="#1b1b1b"/><stop offset="1" stop-color="#030303"/></linearGradient>
-    <radialGradient id="sw" cx=".36" cy=".32" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#e6e6e3"/><stop offset="1" stop-color="#9c9c99"/></radialGradient>
-    <radialGradient id="sb" cx=".36" cy=".32" r=".8"><stop offset="0" stop-color="#6e6e6e"/><stop offset=".45" stop-color="#262626"/><stop offset="1" stop-color="#030303"/></radialGradient>
+    <linearGradient id="cw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#f4f4f1"/><stop offset="1" stop-color="#d6d6d1"/></linearGradient>
+    <linearGradient id="cb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4a4a"/><stop offset=".55" stop-color="#1f1f1f"/><stop offset="1" stop-color="#050505"/></linearGradient>
   </defs>
 </svg>`;

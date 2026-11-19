@@ -28,13 +28,13 @@ export async function homePage(root) {
   root.innerHTML = `
     <section class="hero" id="hero">
       <div class="fp-layer" aria-hidden="true">
-        ${floating('q', 'b', { x: 9, y: 12, size: 120, rot: -18, depth: 34, delay: 0 })}
-        ${floating('n', 'w', { x: 76, y: 8, size: 132, rot: 16, depth: 40, delay: 0.15 })}
-        ${floating('p', 'w', { x: 24, y: 46, size: 62, rot: 24, depth: 14, blur: 1.5, delay: 0.3, mobile: false })}
-        ${floating('b', 'b', { x: 70, y: 52, size: 104, rot: -12, depth: 30, delay: 0.2, mobile: false })}
-        ${floating('p', 'w', { x: 54, y: 74, size: 56, rot: -30, depth: 10, blur: 2.5, delay: 0.4 })}
-        ${floating('r', 'w', { x: 88, y: 62, size: 70, rot: 22, depth: 18, blur: 1, delay: 0.35, mobile: false })}
-        ${floating('k', 'b', { x: 3, y: 60, size: 86, rot: 14, depth: 22, blur: .6, delay: 0.25, mobile: false })}
+        ${floating('q', 'b', { x: 9, y: 12, size: 150, rot: -18, depth: 34, delay: 0 })}
+        ${floating('n', 'w', { x: 76, y: 8, size: 165, rot: 16, depth: 40, delay: 0.15 })}
+        ${floating('p', 'w', { x: 24, y: 46, size: 78, rot: 24, depth: 14, blur: 1.5, delay: 0.3, mobile: false })}
+        ${floating('b', 'b', { x: 70, y: 52, size: 130, rot: -12, depth: 30, delay: 0.2, mobile: false })}
+        ${floating('p', 'w', { x: 63, y: 84, size: 70, rot: -30, depth: 10, blur: 2.5, delay: 0.4 })}
+        ${floating('r', 'w', { x: 88, y: 62, size: 88, rot: 22, depth: 18, blur: 1, delay: 0.35, mobile: false })}
+        ${floating('k', 'b', { x: 3, y: 60, size: 108, rot: 14, depth: 22, blur: .6, delay: 0.25, mobile: false })}
       </div>
       <div class="hero-center">
         <h1 class="display"><span>Шахматные</span> <span>турниры</span></h1>
@@ -91,8 +91,8 @@ export async function homePage(root) {
           <h2 class="display-2">Соперники уже за&nbsp;досками</h2>
           <a class="pill" href="#/tournaments">Выбрать турнир</a>
         </div>
-        ${floating('n', 'w', { x: 84, y: 30, size: 92, rot: -20, depth: 20 })}
-        ${floating('p', 'b', { x: 8, y: 70, size: 58, rot: 18, depth: 12, blur: 1 })}
+        ${floating('n', 'w', { x: 84, y: 30, size: 115, rot: -20, depth: 20 })}
+        ${floating('p', 'b', { x: 8, y: 70, size: 72, rot: 18, depth: 12, blur: 1 })}
       </div>
       <div class="wrap club">
         <div class="card feed-card"><h3>Последние результаты</h3><ul class="feed" id="feed"></ul></div>

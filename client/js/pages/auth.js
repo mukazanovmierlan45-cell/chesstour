@@ -30,9 +30,9 @@ function layout(title, text, box) {
         <h2>${title}</h2>
         <p>${text}</p>
         <div class="auth-art" aria-hidden="true">
-          ${floating('k', 'w', { x: 8, y: 6, size: 120, rot: -10, depth: 26 })}
-          ${floating('n', 'b', { x: 46, y: 22, size: 132, rot: 14, depth: 34, delay: 0.2 })}
-          ${floating('p', 'w', { x: 74, y: 2, size: 58, rot: 26, depth: 12, blur: 1.5, delay: 0.4 })}
+          ${floating('k', 'w', { x: 8, y: 6, size: 150, rot: -10, depth: 26 })}
+          ${floating('n', 'b', { x: 46, y: 22, size: 165, rot: 14, depth: 34, delay: 0.2 })}
+          ${floating('p', 'w', { x: 74, y: 2, size: 72, rot: 26, depth: 12, blur: 1.5, delay: 0.4 })}
         </div>
       </aside>
       <div class="auth-main"><div class="auth-box">${box}</div></div>
