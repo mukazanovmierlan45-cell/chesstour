@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Гамбит — турниры шахматного клуба</title>
+  <meta name="description" content="Турниры шахматного клуба: заявки, жеребьёвка, результаты и турнирные таблицы онлайн.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="#/" class="brand" aria-label="Гамбит, на главную">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span><span class="brand-name">Гамбит</span><span class="brand-sub">турниры шахматного клуба</span></span>
+    </a>
+    <nav id="nav" aria-label="Основное меню"></nav>
+  </header>
+
+  <main id="app"></main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>
+        <a href="#/" class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span><span class="brand-name">Гамбит</span><span class="brand-sub">турниры шахматного клуба</span></span>
+        </a>
+        <p>Заявки, жеребьёвка, результаты и турнирные таблицы в одном месте — для игроков, судей и руководителей клуба.</p>
+      </div>
+      <div>
+        <h3>Турниры</h3>
+        <ul>
+          <li><a href="#/tournaments?status=registration">Идёт регистрация</a></li>
+          <li><a href="#/tournaments?status=ongoing">Играются сейчас</a></li>
+          <li><a href="#/tournaments?status=finished">Завершённые</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Участникам</h3>
+        <ul>
+          <li><a href="#/register">Создать аккаунт</a></li>
+          <li><a href="#/login">Войти</a></li>
+          <li><a href="#/my">Мои турниры</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> Гамбит. Курсовой проект, ВК «ASTANA POLYTECHNIC»</span>
+      <span><span class="api-dot" id="api-dot"></span><span id="api-status">Проверяем сервер…</span></span>
+    </div>
+  </footer>
+
+  <div id="flash" class="flash" role="status" hidden></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
