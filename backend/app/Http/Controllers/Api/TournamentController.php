@@ -79,6 +79,8 @@ class TournamentController extends Controller
     /** GET /tournaments/{tournament}/standings — турнирная таблица */
     public function standings(Tournament $tournament): JsonResponse
     {
-        return response()->json(['data' => $this->standings->forTournament($tournament)]);
+        // очки и Бухгольц всегда дробные (1.0, 2.5): без флага json_encode отдал бы 1 вместо 1.0,
+        // и тип поля зависел бы от результата
+        return response()->json(['data' => $this->standings->forTournament($tournament)], 200, [], JSON_PRESERVE_ZERO_FRACTION);
     }
 }
