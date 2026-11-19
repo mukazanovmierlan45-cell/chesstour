@@ -83,7 +83,7 @@ try {
 
     Step '6/8 Копирование кода проекта'
     Get-ChildItem $backend -Force | ForEach-Object { Copy-Item $_.FullName $app -Recurse -Force }
-    $envText = Get-Content (Join-Path $app '.env.example') -Encoding UTF8
+    $envText = [IO.File]::ReadAllLines((Join-Path $app '.env.example'), (New-Object Text.UTF8Encoding($false)))
     # Для быстрого запуска — SQLite (файл database\database.sqlite). Переход на MySQL описан в README.
     $envText = $envText -replace '^DB_CONNECTION=.*', 'DB_CONNECTION=sqlite'
     $envText = $envText | Where-Object { $_ -notmatch '^DB_(HOST|PORT|DATABASE|USERNAME|PASSWORD)=' }
