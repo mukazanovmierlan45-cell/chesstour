@@ -51,6 +51,7 @@ function Header() {
           <>
             {link('/my', 'Мои турниры')}
             {link('/training', 'Тренировка')}
+            {link('/assistant', 'ИИ-ассистент')}
             {hasRole('organizer', 'admin') && link('/tournaments/new', 'Новый турнир')}
             {hasRole('admin') && link('/admin', 'Администрирование')}
             <span className="who"><span>{user.name}<small>{user.role_label}</small></span><Avatar name={user.name} /></span>
@@ -95,6 +96,7 @@ function Footer() {
           <ul>
             <li><Link to="/register">Создать аккаунт</Link></li>
             <li><Link to="/training">Тренировка с роботом</Link></li>
+            <li><Link to="/assistant">ИИ-ассистент</Link></li>
             <li><Link to="/my">Мои турниры</Link></li>
           </ul>
         </div>

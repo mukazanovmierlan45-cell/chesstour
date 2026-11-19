@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Шахматные турниры API",
-    "description": "REST API системы организации и проведения шахматных турниров «Гамбит» (Laravel 12 + Sanctum).\n\n**Как пользоваться**\n1. Запустите API (`php artisan serve` или ЗАПУСТИТЬ.bat) — адрес в переменной `{{base_url}}` (по умолчанию http://127.0.0.1:8000/api/v1).\n2. Выполните один из запросов «Вход» — скрипт сохранит токен в переменную `{{token}}`. Авторизация коллекции — Bearer Token `{{token}}`.\n3. Во всех запросах передаётся заголовок `Accept: application/json`.\n\n**Формат ответов.** Успех — объект `data` (списки с пагинацией — `data`, `links`, `meta`). Ошибки — `{ \"message\": \"...\" }`, для 422 — дополнительно `errors` по полям.\n\n**Коды:** 200, 201 (создано), 204 (удалено), 401 (нет токена), 403 (нет прав по роли или не свой турнир), 404 (запись не найдена), 409 (нарушение бизнес-правила), 422 (ошибка валидации).\n\n**Роли:** player — игрок, organizer — организатор, admin — администратор. Тестовые учётные записи: admin@chess.test, organizer@chess.test, player@chess.test, пароль `password`.",
+    "description": "REST API системы организации и проведения шахматных турниров «Гамбит» (Laravel 12 + Sanctum).\n\n**Как пользоваться**\n1. Запустите API (`php artisan serve` или ЗАПУСТИТЬ.bat) — адрес в переменной `{{base_url}}` (по умолчанию http://127.0.0.1:8000/api/v1).\n2. Выполните один из запросов «Вход» — скрипт сохранит токен в переменную `{{token}}`. Авторизация коллекции — Bearer Token `{{token}}`.\n3. Во всех запросах передаётся заголовок `Accept: application/json`.\n\n**Формат ответов.** Успех — объект `data` (списки с пагинацией — `data`, `links`, `meta`). Ошибки — `{ \"message\": \"...\" }`, для 422 — дополнительно `errors` по полям.\n\n**ИИ-ассистент:** `POST /ai/chat` — чат с Гамбит-ботом (Google Gemini), нужен GEMINI_API_KEY в .env.\n\n**Коды:** 200, 201 (создано), 204 (удалено), 401 (нет токена), 403 (нет прав по роли или не свой турнир), 404 (запись не найдена), 409 (нарушение бизнес-правила), 422 (ошибка валидации).\n\n**Роли:** player — игрок, organizer — организатор, admin — администратор. Тестовые учётные записи: admin@chess.test, organizer@chess.test, player@chess.test, пароль `password`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -996,6 +996,239 @@
                 }
               ],
               "body": "{\n  \"message\": \"Требуется авторизация\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "ИИ-ассистент: сообщение",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Какой дебют выучить новичку?\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ai/chat",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ai",
+                "chat"
+              ]
+            },
+            "description": "Чат с ИИ-ассистентом клуба «Гамбит-бот» (Google Gemini). Клиент передаёт историю диалога целиком; сервер добавляет системную инструкцию с актуальными турнирами клуба из БД. Ограничение — 10 запросов в минуту. Ключ GEMINI_API_KEY задаётся только в .env.\n\n**Доступ:** любой авторизованный пользователь.\n\n**Параметры:** Тело: `messages[]` (1–20) — `role` (user | assistant), `content` (до 2000 символов); последнее сообщение — от пользователя.\n\n**Коды ответов:** 200 OK, 401 Unauthorized, 422 Unprocessable Entity, 429 Too Many Requests, 503 Service Unavailable."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Какой дебют выучить новичку?\"\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/ai/chat",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "ai",
+                    "chat"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"role\": \"assistant\",\n    \"content\": \"Начните с Итальянской партии: 1. e4 e5 2. Кf3 Кc6 3. Сc4 — она учит быстро развивать фигуры и бороться за центр.\"\n  }\n}"
+            },
+            {
+              "name": "401 без токена",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Какой дебют выучить новичку?\"\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/ai/chat",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "ai",
+                    "chat"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Требуется авторизация\"\n}"
+            },
+            {
+              "name": "422 последнее сообщение не от пользователя",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Какой дебют выучить новичку?\"\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/ai/chat",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "ai",
+                    "chat"
+                  ]
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Ошибка валидации\",\n  \"errors\": {\n    \"messages\": [\n      \"Последнее сообщение должно быть от пользователя\"\n    ]\n  }\n}"
+            },
+            {
+              "name": "429 лимит",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Какой дебют выучить новичку?\"\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/ai/chat",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "ai",
+                    "chat"
+                  ]
+                }
+              },
+              "status": "Too Many Requests",
+              "code": 429,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Too Many Attempts.\"\n}"
+            },
+            {
+              "name": "503 ИИ недоступен",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Какой дебют выучить новичку?\"\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/ai/chat",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "ai",
+                    "chat"
+                  ]
+                }
+              },
+              "status": "Service Unavailable",
+              "code": 503,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"ИИ-ассистент временно недоступен, попробуйте позже\"\n}"
             }
           ]
         }

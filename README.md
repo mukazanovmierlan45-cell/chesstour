@@ -12,7 +12,7 @@ REST API на Laravel 12 + клиентское SPA на React 19 (Vite, React R
 ## Структура репозитория
 
 ```
-backend/   файлы Laravel-проекта (накладываются на свежую установку, см. ниже)
+backend/   полный Laravel-проект (REST API)
 client/    клиент: React SPA (Vite)
   src/pages/       страницы (маршруты React Router)
   src/components/  макет, защищённый маршрут, общие компоненты
@@ -29,35 +29,36 @@ PHP 8.3+ (pdo_mysql, mbstring, openssl, fileinfo, curl), Composer, MySQL 8, Git.
 
 ## Установка backend
 
-В архиве лежат только файлы проекта, без `vendor`. Laravel ставится командой Composer,
-затем поверх копируются файлы из папки `backend/`.
+Папка `backend/` — полный Laravel-проект (composer.json, composer.lock, artisan).
 
 ```bash
-# 1. Свежий Laravel и API-маршруты со Sanctum
-composer create-project laravel/laravel:^12.0 chess-tournaments-api
-cd chess-tournaments-api
-php artisan install:api          # на вопрос о миграциях ответьте "no"
-php artisan config:publish cors
-
-# 2. Скопируйте содержимое папки backend/ из архива в chess-tournaments-api/
-#    с заменой файлов (app, bootstrap, config, database, lang, routes, tests,
-#    .env.example, phpunit.xml)
-
-# 3. Настройка окружения
+cd backend
+composer install
 cp .env.example .env             # в Windows: copy .env.example .env
 php artisan key:generate
 # создайте в MySQL базу chess_tournaments и проверьте DB_* в .env
-
-# 4. База данных и тестовые данные
-php artisan migrate:fresh --seed
+# (для быстрого старта можно DB_CONNECTION=sqlite и пустой файл database/database.sqlite)
+php artisan migrate --seed
 php artisan storage:link
-
-# 5. Запуск
 php artisan serve                # http://127.0.0.1:8000
 ```
 
 Проверка: http://127.0.0.1:8000/api/health должен вернуть `"database": "ok"`.
 Список маршрутов: `php artisan route:list --path=api`.
+
+## ИИ-ассистент (Google Gemini)
+
+`POST /api/v1/ai/chat` — чат с «Гамбит-ботом»: шахматные вопросы, турниры клуба, помощь по сайту.
+В клиенте — страница «ИИ-ассистент» (`/#/assistant`, нужен вход).
+
+- Клиент передаёт историю диалога (`messages[]`: `role` user/assistant, `content` до 2000 символов, не более 20 сообщений).
+- Сервер (`app/Services/AiChatService.php`) добавляет системную инструкцию с актуальными турнирами клуба из БД
+  и вызывает Gemini `generateContent`; ответ — `{"data": {"role": "assistant", "content": "..."}}`.
+- Коды: 401 — нет токена, 422 — ошибки валидации, 429 — больше 10 сообщений в минуту, 503 — ИИ недоступен или не настроен.
+- Настройка: получите ключ на https://aistudio.google.com/apikey и впишите в `backend/.env`:
+  `GEMINI_API_KEY=...` (модель — `GEMINI_MODEL`, по умолчанию `gemini-2.5-flash`), затем `php artisan config:clear`.
+  Ключ не коммитится и не попадает в клиент.
+- В тестах (`tests/Feature/AiChatApiTest.php`) Gemini подменяется `Http::fake()` — ключ и интернет не нужны.
 
 ### Тестовые учётные записи
 

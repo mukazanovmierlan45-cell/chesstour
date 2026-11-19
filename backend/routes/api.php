@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AiChatController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\GameController;
 use App\Http\Controllers\Api\ParticipantController;
@@ -56,6 +57,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         Route::get('my/tournaments', [ParticipantController::class, 'myTournaments'])->name('my.tournaments');
         Route::get('my/games', [GameController::class, 'myGames'])->name('my.games');
+
+        // ИИ-ассистент клуба (Gemini): не больше 10 сообщений в минуту
+        Route::post('ai/chat', [AiChatController::class, 'chat'])
+            ->middleware('throttle:10,1')->name('ai.chat');
 
         // Игрок: заявка на турнир (ключевой сценарий)
         Route::middleware('role:player')->group(function () {

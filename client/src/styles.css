@@ -599,3 +599,29 @@ input.invalid, select.invalid, textarea.invalid { border-color: var(--danger); b
 }
 
 .dark-sec .step-card.dark svg, .split-dark svg, .t-hero-art svg:last-child, .auth-side .fp svg { filter: drop-shadow(0 18px 16px rgba(0, 0, 0, .45)) drop-shadow(0 0 1px rgba(255, 255, 255, .25)); }
+
+/* ---------- ИИ-ассистент ---------- */
+.chat { background: var(--card); border-radius: 26px; box-shadow: 0 1px 0 var(--line), 0 0 0 1px rgba(0, 0, 0, .03); padding: 18px; display: grid; gap: 12px; }
+.chat-log { height: min(60vh, 560px); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 6px 4px; }
+.chat-hello { margin: auto; text-align: center; max-width: 520px; display: grid; justify-items: center; gap: 6px; }
+.chat .robot { width: 40px; height: 40px; flex: none; }
+.chat .robot.big { width: 84px; height: 84px; margin-bottom: 6px; }
+.chat .robot svg { width: 100%; height: 100%; }
+.chat .robot.thinking .eye { animation: blink .8s infinite; }
+.chat-suggest { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+.chip-btn { background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px; font-weight: 600; font-size: 14px; }
+.chip-btn:hover { background: #fff; border-color: var(--ink); }
+.msg { display: flex; gap: 10px; align-items: flex-end; max-width: 82%; animation: rise .3s var(--ease); }
+.msg.user { align-self: flex-end; flex-direction: row-reverse; }
+.msg-bubble { padding: 12px 16px; border-radius: 20px; white-space: pre-wrap; line-height: 1.55; font-size: 15px; }
+.msg.assistant .msg-bubble { background: var(--paper); border-bottom-left-radius: 6px; }
+.msg.user .msg-bubble { background: var(--ink); color: #fff; border-bottom-right-radius: 6px; }
+.typing { display: flex; gap: 5px; align-items: center; height: 44px; }
+.typing i { width: 7px; height: 7px; border-radius: 50%; background: #8a8a86; animation: blink 1.2s infinite; }
+.typing i:nth-child(2) { animation-delay: .2s; } .typing i:nth-child(3) { animation-delay: .4s; }
+.chat-error { background: var(--danger-soft); color: var(--danger); border-radius: 12px; padding: 10px 14px; font-weight: 600; }
+.chat-input { display: flex; gap: 10px; align-items: flex-end; }
+.chat-input textarea { min-height: 50px; max-height: 160px; resize: vertical; border-radius: 16px; }
+.chat-input button { height: 50px; border-radius: 16px; padding: 0 22px; }
+.chat .hint { margin: 0; font-size: 12px; }
+@media (max-width: 600px) { .msg { max-width: 94%; } .chat-input { flex-direction: column; align-items: stretch; } }

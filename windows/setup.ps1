@@ -60,41 +60,35 @@ try {
     Expand-Archive (Join-Path $root 'chess-tournaments.zip') $src -Force
     $backend = Join-Path $src 'chess-tournaments\backend'
 
-    Step '4/8 Laravel 12 (composer create-project, несколько минут)'
-    if (-not (Test-Path (Join-Path $app 'artisan'))) {
-        Composer @('create-project', 'laravel/laravel:^12.0', $app, '--no-interaction', '--prefer-dist')
-    }
+    Step '4/8 Laravel-проект из репозитория (backend)'
+    New-Item -ItemType Directory -Force $app | Out-Null
+    Copy-Item (Join-Path $backend '*') $app -Recurse -Force
     Set-Location $app
 
-    Step '5/8 API и Sanctum'
-    if (-not (Test-Path (Join-Path $app 'routes\api.php'))) {
-        Php @('artisan', 'install:api', '--no-interaction')
-    }
-    if (-not (Test-Path (Join-Path $app 'vendor\laravel\sanctum'))) {
-        Composer @('require', 'laravel/sanctum:^4.0', '--no-interaction')
-    }
-    $tokensMigration = Get-ChildItem (Join-Path $app 'database\migrations') -Filter '*personal_access_tokens*' -ErrorAction SilentlyContinue
-    if (-not $tokensMigration) {
-        Php @('artisan', 'vendor:publish', '--provider=Laravel\Sanctum\SanctumServiceProvider', '--no-interaction')
-    }
-    if (-not (Test-Path (Join-Path $app 'config\cors.php'))) {
-        Php @('artisan', 'config:publish', 'cors', '--no-interaction')
-    }
+    Step '5/8 Зависимости PHP (composer install, несколько минут)'
+    Composer @('install', '--no-interaction', '--prefer-dist')
 
-    Step '6/8 Копирование кода проекта'
-    Get-ChildItem $backend -Force | ForEach-Object { Copy-Item $_.FullName $app -Recurse -Force }
-    $envText = [IO.File]::ReadAllLines((Join-Path $app '.env.example'), (New-Object Text.UTF8Encoding($false)))
-    # Для быстрого запуска — SQLite (файл database\database.sqlite). Переход на MySQL описан в README.
-    $envText = $envText -replace '^DB_CONNECTION=.*', 'DB_CONNECTION=sqlite'
-    $envText = $envText | Where-Object { $_ -notmatch '^DB_(HOST|PORT|DATABASE|USERNAME|PASSWORD)=' }
-    [IO.File]::WriteAllLines((Join-Path $app '.env'), [string[]]$envText, (New-Object Text.UTF8Encoding($false)))
+    Step '6/8 Настройки .env'
+    $envPath = Join-Path $app '.env'
+    $utf8 = New-Object Text.UTF8Encoding($false)
+    if (-not (Test-Path $envPath)) {
+        # для быстрого запуска — SQLite (database\database.sqlite); переход на MySQL описан в README
+        $envText = [IO.File]::ReadAllLines((Join-Path $app '.env.example'), $utf8)
+        $envText = $envText -replace '^DB_CONNECTION=.*', 'DB_CONNECTION=sqlite'
+        $envText = $envText | Where-Object { $_ -notmatch '^DB_(HOST|PORT|DATABASE|USERNAME|PASSWORD)=' }
+        [IO.File]::WriteAllLines($envPath, [string[]]$envText, $utf8)
+        Php @('artisan', 'key:generate', '--force')
+    } elseif (-not (Select-String -Path $envPath -Pattern '^GEMINI_API_KEY=' -Quiet)) {
+        # существующий .env не перезаписываем (там ключи), только дописываем настройки ИИ
+        [IO.File]::AppendAllText($envPath, "`r`n# ИИ-ассистент (Google Gemini)`r`nGEMINI_API_KEY=`r`nGEMINI_MODEL=gemini-2.5-flash`r`n", $utf8)
+    }
     $db = Join-Path $app 'database\database.sqlite'
     if (-not (Test-Path $db)) { New-Item -ItemType File $db | Out-Null }
-    Php @('artisan', 'key:generate', '--force')
     Php @('artisan', 'config:clear')
 
     Step '7/8 База данных и тестовые данные'
-    Php @('artisan', 'migrate:fresh', '--seed', '--force')
+    Php @('artisan', 'migrate', '--force')
+    if (-not (Test-Path (Join-Path $app '.seeded'))) { Php @('artisan', 'db:seed', '--force'); New-Item -ItemType File (Join-Path $app '.seeded') | Out-Null }
     Php @('artisan', 'storage:link', '--force')
     Php @('artisan', 'route:list', '--path=api')
 

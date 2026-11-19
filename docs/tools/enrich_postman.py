@@ -149,6 +149,18 @@ NEW_REQUESTS = {
                          "start_date": "2027-03-10", "end_date": "2027-03-12", "registration_deadline": "2027-03-09 18:00:00", "max_participants": 16, "rounds_count": 5}, ensure_ascii=False, indent=2)},
                "url": {"raw": "{{base_url}}/tournaments", "host": ["{{base_url}}"], "path": ["tournaments"]}},
    "_doc": ("Демонстрация разграничения прав: игрок (токен после «Вход: игрок») пытается создать турнир — middleware role:organizer,admin возвращает 403.", "staff", "Выполните сначала «Вход: игрок».", [R("403 Forbidden", 403, E403)])}],
+ "1. Аутентификация": [{
+   "name": "ИИ-ассистент: сообщение",
+   "request": {"method": "POST", "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
+               "body": {"mode": "raw", "raw": json.dumps({"messages": [{"role": "user", "content": "Какой дебют выучить новичку?"}]}, ensure_ascii=False, indent=2)},
+               "url": {"raw": "{{base_url}}/ai/chat", "host": ["{{base_url}}"], "path": ["ai", "chat"]}},
+   "_doc": ("Чат с ИИ-ассистентом клуба «Гамбит-бот» (Google Gemini). Клиент передаёт историю диалога целиком; сервер добавляет системную инструкцию с актуальными турнирами клуба из БД. Ограничение — 10 запросов в минуту. Ключ GEMINI_API_KEY задаётся только в .env.", "auth",
+            "Тело: `messages[]` (1–20) — `role` (user | assistant), `content` (до 2000 символов); последнее сообщение — от пользователя.",
+            [R("200 OK", 200, {"data": {"role": "assistant", "content": "Начните с Итальянской партии: 1. e4 e5 2. Кf3 Кc6 3. Сc4 — она учит быстро развивать фигуры и бороться за центр."}}),
+             R("401 без токена", 401, E401),
+             R("422 последнее сообщение не от пользователя", 422, e422(messages="Последнее сообщение должно быть от пользователя")),
+             R("429 лимит", 429, {"message": "Too Many Attempts."}),
+             R("503 ИИ недоступен", 503, {"message": "ИИ-ассистент временно недоступен, попробуйте позже"})])}],
  "3. Участники (ключевой сценарий)": [{
    "name": "Заявка на закрытую регистрацию (409)",
    "request": {"method": "POST", "header": [{"key": "Accept", "value": "application/json"}],
@@ -157,7 +169,7 @@ NEW_REQUESTS = {
             [R("409 Conflict", 409, e409("Регистрация на турнир закрыта"))])}],
 }
 
-STATUS_TEXT = {503: "Service Unavailable", 200: "OK", 201: "Created", 204: "No Content", 401: "Unauthorized", 403: "Forbidden", 404: "Not Found", 409: "Conflict", 422: "Unprocessable Entity"}
+STATUS_TEXT = {429: "Too Many Requests", 503: "Service Unavailable", 200: "OK", 201: "Created", 204: "No Content", 401: "Unauthorized", 403: "Forbidden", 404: "Not Found", 409: "Conflict", 422: "Unprocessable Entity"}
 
 def apply_doc(item, doc):
     text, role, params, examples = doc
@@ -192,6 +204,8 @@ c["info"]["description"] = """REST API системы организации и 
 3. Во всех запросах передаётся заголовок `Accept: application/json`.
 
 **Формат ответов.** Успех — объект `data` (списки с пагинацией — `data`, `links`, `meta`). Ошибки — `{ "message": "..." }`, для 422 — дополнительно `errors` по полям.
+
+**ИИ-ассистент:** `POST /ai/chat` — чат с Гамбит-ботом (Google Gemini), нужен GEMINI_API_KEY в .env.
 
 **Коды:** 200, 201 (создано), 204 (удалено), 401 (нет токена), 403 (нет прав по роли или не свой турнир), 404 (запись не найдена), 409 (нарушение бизнес-правила), 422 (ошибка валидации).
 

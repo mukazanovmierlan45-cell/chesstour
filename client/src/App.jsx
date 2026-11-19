@@ -9,6 +9,7 @@ import TournamentFormPage from './pages/TournamentFormPage.jsx';
 import MyPage from './pages/MyPage.jsx';
 import TrainingPage from './pages/TrainingPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
+import AssistantPage from './pages/AssistantPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 
 const STAFF = ['organizer', 'admin'];
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="tournaments/:id/edit" element={<ProtectedRoute roles={STAFF}><TournamentFormPage /></ProtectedRoute>} />
         <Route path="my" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="training" element={<ProtectedRoute><TrainingPage /></ProtectedRoute>} />
+        <Route path="assistant" element={<ProtectedRoute><AssistantPage /></ProtectedRoute>} />
         <Route path="admin" element={<ProtectedRoute roles={['admin']}><AdminPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
