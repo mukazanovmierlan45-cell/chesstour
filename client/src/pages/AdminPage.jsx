@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Empty, FieldError, Loading, useAction } from '../components/ui.jsx';
+import { LABELS } from '../lib/format.js';
 
 const ROLES = { player: 'Игрок', organizer: 'Организатор', admin: 'Администратор' };
 const TYPES = { classical: 'Классика', rapid: 'Рапид', blitz: 'Блиц', bullet: 'Пуля' };
@@ -50,9 +51,9 @@ export default function AdminPage() {
       <div className="page-head"><div><h1 data-type="h">Администрирование</h1><p data-type="p">Статистика клуба, контроли времени и роли пользователей</p></div></div>
       <div className="grid">
         <div className="card"><h2 style={{ marginTop: 0 }}>Турниры: {stats.tournaments.total}</h2>
-          {Object.entries(stats.tournaments.by_status).map(([k, v]) => <div key={k}>{k}: <b>{v}</b></div>)}</div>
+          {Object.entries(stats.tournaments.by_status).map(([k, v]) => <div key={k}>{LABELS.tournament[k] ?? k}: <b>{v}</b></div>)}</div>
         <div className="card"><h2 style={{ marginTop: 0 }}>Партии: {stats.games.total}</h2>
-          {Object.entries(stats.games.by_result).map(([k, v]) => <div key={k}>{k}: <b>{v}</b></div>)}</div>
+          {Object.entries(stats.games.by_result).map(([k, v]) => <div key={k}>{LABELS.result[k] ?? k}: <b>{v}</b></div>)}</div>
         <div className="card"><h2 style={{ marginTop: 0 }}>Самые активные игроки</h2>
           {stats.most_active_players.length ? stats.most_active_players.map((p) => <div key={p.name}>{p.name} — {p.games_played} партий</div>) : <span className="muted">нет данных</span>}</div>
       </div>

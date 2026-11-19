@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
-import { formatDate } from '../lib/format.js';
+import { formatDate, LABELS } from '../lib/format.js';
 import { Badge, Empty, Loading } from '../components/ui.jsx';
 
 export default function MyPage() {
@@ -30,7 +30,7 @@ export default function MyPage() {
                   <td><Link to={`/tournaments/${t.id}`}>{t.title}</Link></td>
                   <td>{formatDate(t.start_date)}</td>
                   <td><Badge value={t.status} label={t.status_label} /></td>
-                  <td>{t.my_registration ? <Badge value={t.my_registration.status} label={t.my_registration.status_label} /> : '—'}</td>
+                  <td>{t.my_registration ? <Badge value={t.my_registration.status} label={LABELS.participant[t.my_registration.status]} /> : '—'}</td>
                 </tr>
               ))}</tbody>
             </table></div>

@@ -34,3 +34,10 @@ export function avatarColor(name = '') {
 /** Аватар строкой — для модулей без React (тренировка). */
 export const avatar = (name = '', size = '') =>
   `<span class="avatar ${size}" style="background:${avatarColor(name)}" aria-hidden="true">${esc(initials(name))}</span>`;
+
+/** Подписи значений (совпадают с label() перечислений бэкенда) — для полей, где API отдаёт только код. */
+export const LABELS = {
+  participant: { pending: 'Заявка', confirmed: 'Допущен', withdrawn: 'Снялся' },
+  tournament: { draft: 'Черновик', registration: 'Регистрация', ongoing: 'Идёт', finished: 'Завершён', cancelled: 'Отменён' },
+  result: { pending: 'Не сыграна', white_win: 'Победа белых', black_win: 'Победа чёрных', draw: 'Ничья', bye: 'Без пары' },
+};
