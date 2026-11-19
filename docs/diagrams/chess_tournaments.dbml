@@ -1,0 +1,96 @@
+// ER-модель: система организации и проведения шахматных турниров
+// Вставьте этот код на https://dbdiagram.io (Crow's Foot строится автоматически)
+
+Table users {
+  id bigint [pk, increment]
+  name varchar [not null, note: 'ФИО']
+  email varchar [not null, unique]
+  email_verified_at timestamp [null]
+  password varchar [not null, note: 'хеш пароля']
+  role varchar [not null, default: 'player', note: 'player | organizer | admin']
+  rating smallint [not null, default: 1200, note: 'рейтинг Эло']
+  remember_token varchar [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table time_controls {
+  id bigint [pk, increment]
+  name varchar [not null, note: 'например, Блиц 3+2']
+  type varchar [not null, note: 'classical | rapid | blitz | bullet']
+  base_minutes smallint [not null]
+  increment_seconds smallint [not null, default: 0]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table tournaments {
+  id bigint [pk, increment]
+  user_id bigint [not null, note: 'организатор']
+  time_control_id bigint [not null]
+  title varchar [not null]
+  description text [null]
+  format varchar [not null, note: 'swiss | round_robin | knockout']
+  location varchar [not null]
+  start_date date [not null]
+  end_date date [not null]
+  registration_deadline datetime [not null]
+  max_participants smallint [not null]
+  rounds_count tinyint [not null]
+  min_rating smallint [null]
+  poster_path varchar [null]
+  status varchar [not null, default: 'draft', note: 'draft | registration | ongoing | finished | cancelled']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table tournament_user {
+  id bigint [pk, increment]
+  tournament_id bigint [not null]
+  user_id bigint [not null]
+  start_number smallint [null]
+  rating_at_start smallint [not null]
+  status varchar [not null, default: 'pending', note: 'pending | confirmed | withdrawn']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (tournament_id, user_id) [unique]
+  }
+  Note: 'Промежуточная таблица связи «многие ко многим» users <-> tournaments'
+}
+
+Table rounds {
+  id bigint [pk, increment]
+  tournament_id bigint [not null]
+  number tinyint [not null]
+  starts_at datetime [null]
+  status varchar [not null, default: 'pending', note: 'pending | ongoing | completed']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (tournament_id, number) [unique]
+  }
+}
+
+Table games {
+  id bigint [pk, increment]
+  round_id bigint [not null]
+  white_player_id bigint [not null]
+  black_player_id bigint [null, note: 'NULL при bye']
+  board_number smallint [not null]
+  result varchar [not null, default: 'pending', note: 'pending | white_win | black_win | draw | bye']
+  pgn text [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: tournaments.user_id > users.id
+Ref: tournaments.time_control_id > time_controls.id
+Ref: tournament_user.tournament_id > tournaments.id
+Ref: tournament_user.user_id > users.id
+Ref: rounds.tournament_id > tournaments.id
+Ref: games.round_id > rounds.id
+Ref: games.white_player_id > users.id
+Ref: games.black_player_id > users.id

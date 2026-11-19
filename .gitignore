@@ -1,0 +1,12 @@
+# Laravel
+backend/vendor/
+backend/node_modules/
+backend/.env
+backend/storage/*.key
+backend/database/*.sqlite
+backend/public/storage
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
