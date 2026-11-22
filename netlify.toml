@@ -1,0 +1,14 @@
+# Сайт на Netlify — это React-клиент из папки client/ (Vite).
+[build]
+  base = "client"
+  command = "npm ci --include=dev && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA: любые пути отдаём index.html (клиент использует HashRouter, но это защищает от 404 при прямых ссылках)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
